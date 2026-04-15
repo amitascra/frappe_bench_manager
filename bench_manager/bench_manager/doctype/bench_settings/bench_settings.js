@@ -156,7 +156,7 @@ frappe.ui.form.on('Bench Settings', {
 	}
 });
 
-function show_app_debugger_dialog() {
+window.show_app_debugger_dialog = function() {
 	frappe.call({
 		method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.get_app_debug_info',
 		freeze: true,
@@ -238,10 +238,10 @@ function show_app_debugger_dialog() {
 						action_btn = '<span class="text-muted">No action needed</span>';
 					} else if (app.status === 'Missing PKG-INFO') {
 						status_badge = '<span class="badge badge-warning">Missing PKG-INFO</span>';
-						action_btn = `<button class="btn btn-xs btn-primary" onclick="fix_single_app('${app.app_name}')">Generate PKG-INFO</button>`;
+						action_btn = `<button class="btn btn-xs btn-primary" onclick="window.fix_single_app('${app.app_name}')">Generate PKG-INFO</button>`;
 					} else {
 						status_badge = '<span class="badge badge-danger">Missing egg-info</span>';
-						action_btn = `<button class="btn btn-xs btn-primary" onclick="fix_single_app('${app.app_name}')">Generate PKG-INFO</button>`;
+						action_btn = `<button class="btn btn-xs btn-primary" onclick="window.fix_single_app('${app.app_name}')">Generate PKG-INFO</button>`;
 					}
 					
 					apps_html += `
@@ -278,7 +278,7 @@ function show_app_debugger_dialog() {
 	});
 }
 
-function fix_single_app(app_name) {
+window.fix_single_app = function(app_name) {
 	frappe.call({
 		method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.generate_pkg_info',
 		args: {
@@ -310,7 +310,7 @@ function fix_single_app(app_name) {
 	});
 }
 
-function fix_all_missing_pkg_info(dialog, data) {
+window.fix_all_missing_pkg_info = function(dialog, data) {
 	frappe.confirm(
 		__('This will run "pip install -e ." for all apps missing PKG-INFO. Continue?'),
 		function() {
