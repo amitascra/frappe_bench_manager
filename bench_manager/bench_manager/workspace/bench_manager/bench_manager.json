@@ -1,27 +1,23 @@
 {
- "charts": [],
- "content": "[{\"id\":\"shortcuts_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site\",\"col\":3}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"App\",\"col\":3}},{\"id\":\"shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Settings\",\"col\":3}},{\"id\":\"shortcut_4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Backup\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cards_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"Site Management\",\"col\":4}},{\"id\":\"card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"App Management\",\"col\":4}},{\"id\":\"card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}}]",
+ "charts": [
+  {
+   "chart_name": "Sites Chart",
+   "label": "All Sites Chart"
+  }
+ ],
+ "content": "[{\"id\":\"shortcuts_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Actions</b></span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site\",\"col\":3}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Settings\",\"col\":3}},{\"id\":\"aLRoaLaRRa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Manager Command\",\"col\":3}},{\"id\":\"1TM0rHeIAV\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Website Settings\",\"col\":3}},{\"id\":\"k1sJXUxaMd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Portal Settings\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"0kmX58a04P\",\"type\":\"card\",\"data\":{\"card_name\":\"Job Workers\",\"col\":4}},{\"id\":\"KUxwS4V-Mj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"All Sites Chart\",\"col\":12}}]",
  "creation": "2026-04-15 15:23:02.079130",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "server",
+ "icon": "insert-below",
  "idx": 0,
- "indicator_color": "orange",
+ "indicator_color": "",
  "is_hidden": 0,
  "label": "Bench Manager",
  "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Site Management",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
   {
    "dependencies": "",
    "hidden": 0,
@@ -45,15 +41,6 @@
    "type": "Link"
   },
   {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "App Management",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
@@ -65,15 +52,6 @@
    "type": "Link"
   },
   {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Configuration",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
@@ -83,9 +61,38 @@
    "link_type": "DocType",
    "onboard": 1,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Workers",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "RQ Job",
+   "link_count": 0,
+   "link_to": "RQ Job",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "RQ Worker",
+   "link_count": 0,
+   "link_to": "RQ Worker",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-04-15 15:23:02.079130",
+ "modified": "2026-04-16 02:09:11.343931",
  "modified_by": "Administrator",
  "module": "Bench Manager",
  "name": "Bench Manager",
@@ -98,46 +105,40 @@
  "sequence_id": 10.0,
  "shortcuts": [
   {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Bench Manager Command",
+   "link_to": "Bench Manager Command",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
    "color": "Blue",
+   "doc_view": "",
    "format": "{} Sites",
    "label": "Site",
    "link_to": "Site",
    "type": "DocType"
   },
   {
-   "color": "Orange",
-   "format": "{} Apps",
-   "label": "App",
-   "link_to": "App",
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Website Settings",
+   "link_to": "Website Settings",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Portal Settings",
+   "link_to": "Portal Settings",
    "type": "DocType"
   },
   {
    "color": "Purple",
+   "doc_view": "",
    "label": "Bench Settings",
    "link_to": "Bench Settings",
-   "type": "DocType"
-  },
-  {
-   "color": "Gray",
-   "format": "{} Backups",
-   "label": "Site Backup",
-   "link_to": "Site Backup",
-   "type": "DocType"
-  },
-  {
-   "color": "Green",
-   "format": "{} Online",
-   "label": "Online Sites",
-   "link_to": "Site",
-   "stats_filter": "{\"site_status\": \"Online\"}",
-   "type": "DocType"
-  },
-  {
-   "color": "Red",
-   "format": "{} Offline",
-   "label": "Offline Sites",
-   "link_to": "Site",
-   "stats_filter": "{\"site_status\": \"Offline\"}",
    "type": "DocType"
   }
  ],
