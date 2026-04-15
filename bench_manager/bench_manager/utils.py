@@ -23,6 +23,10 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 		logged_command = re.sub(
 			"{password} .*? ".format(password=password), "", logged_command, flags=re.DOTALL
 		)
+	
+	# Log for debugging
+	frappe.log_error(f"Running command with key: {key}, user: {frappe.session.user}", "Bench Manager Command")
+	
 	doc = frappe.get_doc(
 		{
 			"doctype": "Bench Manager Command",
@@ -35,20 +39,32 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 	)
 	doc.insert()
 	frappe.db.commit()
+	
+	# Send initial message
+	initial_msg = "Executing Command:\n{logged_command}\n\n".format(logged_command=logged_command)
 	frappe.publish_realtime(
 		key,
-		"Executing Command:\n{logged_command}\n\n".format(logged_command=logged_command),
+		initial_msg,
 		user=frappe.session.user,
 	)
+	console_dump += initial_msg
 	try:
 		for command in commands:
+			frappe.publish_realtime(key, f"\n$ {command}\n", user=frappe.session.user)
+			console_dump += f"\n$ {command}\n"
+			
 			terminal = Popen(
 				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd
 			)
+			
+			# Read output character by character and stream it
 			for c in iter(lambda: safe_decode(terminal.stdout.read(1)), ""):
 				frappe.publish_realtime(key, c, user=frappe.session.user)
 				console_dump += str(c)
-		if terminal.wait():
+			
+			return_code = terminal.wait()
+			
+		if return_code:
 			_close_the_doc(
 				start_time, key, console_dump, status="Failed", user=frappe.session.user
 			)

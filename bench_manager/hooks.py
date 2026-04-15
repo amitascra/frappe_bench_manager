@@ -92,6 +92,9 @@ scheduler_events = {
     "cron": {
 		"*/15 * * * *": [
 			"bench_manager.bench_manager.realtime_sync.check_and_sync_if_needed"
+		],
+		"*/5 * * * *": [
+			"bench_manager.bench_manager.doctype.site.site.check_all_sites"
 		]
 	},
     "hourly": [

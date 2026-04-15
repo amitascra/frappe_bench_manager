@@ -11,6 +11,29 @@ frappe.ui.form.on('Site', {
 			frm.reload_doc();
 		});
 	},
+	check_status_button: function(frm) {
+		frappe.call({
+			method: 'check_site_status',
+			doc: frm.doc,
+			callback: function(r) {
+				if (r.message) {
+					let indicator = r.message.status === 'Online' ? 'green' : 'red';
+					let msg = `Site Status: ${r.message.status}`;
+					if (r.message.response_time) {
+						msg += ` (${r.message.response_time.toFixed(2)}ms)`;
+					}
+					if (r.message.error) {
+						msg += ` - ${r.message.error}`;
+					}
+					frappe.show_alert({
+						message: msg,
+						indicator: indicator
+					});
+					frm.reload_doc();
+				}
+			}
+		});
+	},
 	validate: function(frm) {
 		if (frm.doc.db_name == undefined) {
 			let key = frappe.datetime.get_datetime_as_string();
@@ -187,26 +210,36 @@ frappe.ui.form.on('Site', {
 				btn: this,
 				callback: function (r) {
 					var dialog = new frappe.ui.Dialog({
-						title: __('Are you sure?'),
+						title: __('Drop Site - Confirm'),
 						fields: [
-							{
-								fieldname: 'admin_password', fieldtype: 'Password',
-								label: 'Administrator Password', reqd: r['message']['condition'][0] != 'T',
-								default: (r['message']['admin_password'] ? r['message']['admin_password'] : 'admin'),
-								depends_on: `eval:${String(r['message']['condition'][0] != 'T')}`
-							},
 							{
 								fieldname: 'mysql_password',
 								fieldtype: 'Password',
-								label: 'MySQL Password',
-								reqd: r['message']['condition'][1] != 'T',
+								label: 'MySQL Root Password',
+								reqd: r['message']['condition'][0] != 'T',
 								default: r['message']['root_password'],
+								depends_on: `eval:${String(r['message']['condition'][0] != 'T')}`
+							},
+							{
+								fieldname: 'admin_password', 
+								fieldtype: 'Password',
+								label: 'Administrator Password', 
+								reqd: r['message']['condition'][1] != 'T',
+								default: (r['message']['admin_password'] ? r['message']['admin_password'] : 'admin'),
 								depends_on: `eval:${String(r['message']['condition'][1] != 'T')}`
+							},
+							{
+								fieldname: 'warning',
+								fieldtype: 'HTML',
+								options: '<div class="alert alert-danger"><strong>Warning:</strong> This will permanently delete the site and all its data. This action cannot be undone!</div>'
 							}
 						],
 					});
-					dialog.set_primary_action(__('Drop'), () => {
+					dialog.set_primary_action(__('Drop Site'), () => {
 						let key = frappe.datetime.get_datetime_as_string();
+						dialog.hide();
+						
+						// Verify MySQL password first
 						frappe.call({
 							method: 'bench_manager.bench_manager.doctype.site.site.verify_password',
 							args: {
@@ -215,23 +248,43 @@ frappe.ui.form.on('Site', {
 							},
 							callback: function(r){
 								if (r.message == 'console'){
-									frappe.run_serially([
-										() => console_dialog(key),
-										() => frm.call('console_command', {
-											key: key,
-											caller: 'drop_site',
-											mysql_password: dialog.fields_dict.mysql_password.value
-										}, () => {
-											frappe.run_serially([
-												$('a.grey-link:contains("Delete")').click(),
-												$('button.btn.btn-primary.btn-sm:contains("Yes")').click()
-											]);
-										}),
-										() => dialog.hide()
-									]);
-
-
+									// Open console dialog
+									console_dialog(key);
+									
+									// Execute drop site command
+									frm.call('console_command', {
+										key: key,
+										caller: 'drop_site',
+										mysql_password: dialog.fields_dict.mysql_password.value
+									}).then(() => {
+										// Wait for command to complete, then delete the doc
+										setTimeout(() => {
+											frappe.msgprint({
+												title: __('Site Dropped'),
+												message: __('Site {0} has been dropped successfully. Deleting the document...', [frm.doc.name]),
+												indicator: 'green'
+											});
+											// Delete the Site document
+											frappe.call({
+												method: 'frappe.client.delete',
+												args: {
+													doctype: 'Site',
+													name: frm.doc.name
+												},
+												callback: function() {
+													frappe.set_route('List', 'Site');
+												}
+											});
+										}, 3000); // Wait 3 seconds for drop command to complete
+									});
 								}
+							},
+							error: function(r) {
+								frappe.msgprint({
+									title: __('Error'),
+									message: __('Failed to verify MySQL password. Please check and try again.'),
+									indicator: 'red'
+								});
 							}
 						});
 					});
@@ -240,11 +293,16 @@ frappe.ui.form.on('Site', {
 			});
 		});
 		frm.add_custom_button(__('View Site'), () => {
-			frappe.db.get_value('Bench Settings', 'Bench Settings', 'webserver_port',
-				(r) => {
-					window.open(`http://${frm.doc.name}:${r.webserver_port}`, '_blank');
-				}
-			);
+			// Use site_url if available, otherwise fallback to site_name with port
+			if (frm.doc.site_url) {
+				window.open(frm.doc.site_url, '_blank');
+			} else {
+				frappe.db.get_value('Bench Settings', 'Bench Settings', 'webserver_port',
+					(r) => {
+						window.open(`http://${frm.doc.name}:${r.webserver_port}`, '_blank');
+					}
+				);
+			}
 		});
 	}
 });

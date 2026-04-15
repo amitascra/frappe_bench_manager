@@ -37,6 +37,10 @@ class Site(Document):
 		return setattr(self, varname, varval)
 
 	def validate(self):
+		# Auto-populate site_url if empty
+		if not self.site_url and self.site_name:
+			self.site_url = f"http://{self.site_name}"
+		
 		if self.get("__islocal"):
 			if self.developer_flag == 0:
 				self.create_site(self.key)
@@ -52,6 +56,15 @@ class Site(Document):
 
 	def after_command(self, commands=None):
 		frappe.publish_realtime("Bench-Manager:reload-page")
+
+	@frappe.whitelist()
+	def populate_site_url(self):
+		"""Populate site_url from site_name if empty"""
+		if not self.site_url and self.site_name:
+			self.site_url = f"http://{self.site_name}"
+			self.save()
+			return {"success": True, "site_url": self.site_url}
+		return {"success": False, "message": "Site URL already populated or site name missing"}
 
 	@frappe.whitelist()
 	def update_app_alias(self):
@@ -152,6 +165,54 @@ class Site(Document):
 			frappe.throw("Sitename already exists")
 		else:
 			self.console_command(key=key, caller="create-alias", alias=alias)
+
+	@frappe.whitelist()
+	def check_site_status(self):
+		"""Check if site is up and running"""
+		import requests
+		from datetime import datetime
+		
+		if not self.site_url:
+			# Auto-detect URL from site_name
+			self.site_url = f"http://{self.site_name}"
+		
+		try:
+			start_time = datetime.now()
+			response = requests.get(self.site_url, timeout=10, allow_redirects=True)
+			end_time = datetime.now()
+			
+			response_time = (end_time - start_time).total_seconds() * 1000  # Convert to milliseconds
+			
+			if response.status_code == 200:
+				self.db_set('site_status', 'Online')
+				self.db_set('response_time', response_time)
+			else:
+				self.db_set('site_status', 'Error')
+				self.db_set('response_time', response_time)
+				
+			self.db_set('last_checked', datetime.now())
+			
+			return {
+				'status': self.site_status,
+				'response_time': response_time,
+				'status_code': response.status_code
+			}
+			
+		except requests.exceptions.Timeout:
+			self.db_set('site_status', 'Offline')
+			self.db_set('last_checked', datetime.now())
+			return {'status': 'Offline', 'error': 'Timeout'}
+			
+		except requests.exceptions.ConnectionError:
+			self.db_set('site_status', 'Offline')
+			self.db_set('last_checked', datetime.now())
+			return {'status': 'Offline', 'error': 'Connection Error'}
+			
+		except Exception as e:
+			self.db_set('site_status', 'Error')
+			self.db_set('last_checked', datetime.now())
+			frappe.log_error(f"Site monitoring error for {self.site_name}: {str(e)}")
+			return {'status': 'Error', 'error': str(e)}
 
 	@frappe.whitelist()
 	def console_command(
@@ -347,3 +408,17 @@ def jop_site_creation(commands, doctype, key,site_name):
             site.update_app_list()
     site.save()
     frappe.db.commit()
+
+
+def check_all_sites():
+	"""Scheduler task to check all sites"""
+	sites = frappe.get_all('Site', fields=['name', 'site_url'])
+	
+	for site in sites:
+		try:
+			site_doc = frappe.get_doc('Site', site.name)
+			site_doc.check_site_status()
+			frappe.db.commit()
+		except Exception as e:
+			frappe.log_error(f"Error checking site {site.name}: {str(e)}", "Site Monitoring")
+			continue

@@ -11,6 +11,13 @@
   "install_erpnext",
   "column_break_3",
   "site_alias",
+  "site_monitoring_section",
+  "site_url",
+  "site_status",
+  "column_break_monitoring",
+  "last_checked",
+  "response_time",
+  "check_status_button",
   "section_break_4",
   "developer_mode",
   "section_break_6",
@@ -75,6 +82,50 @@
    "in_list_view": 1,
    "label": "Site Alias",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:!(doc.__islocal)",
+   "fieldname": "site_monitoring_section",
+   "fieldtype": "Section Break",
+   "label": "Site Monitoring"
+  },
+  {
+   "fieldname": "site_url",
+   "fieldtype": "Data",
+   "label": "Site URL",
+   "description": "Full URL to monitor (e.g., http://localhost:8000)"
+  },
+  {
+   "fieldname": "site_status",
+   "fieldtype": "Select",
+   "label": "Site Status",
+   "options": "Unknown\nOnline\nOffline\nError",
+   "default": "Unknown",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_monitoring",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_checked",
+   "fieldtype": "Datetime",
+   "label": "Last Checked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_time",
+   "fieldtype": "Float",
+   "label": "Response Time (ms)",
+   "read_only": 1,
+   "precision": 2
+  },
+  {
+   "depends_on": "eval:!(doc.__islocal)",
+   "fieldname": "check_status_button",
+   "fieldtype": "Button",
+   "label": "Check Status Now"
   },
   {
    "depends_on": "eval:!(doc.__islocal)",
