@@ -3,10 +3,8 @@
 
 frappe.ui.form.on('Site', {
 	onload: function(frm) {
-		if (frm.is_new() != 1) {
-			frm.save();
-			frm.call('update_app_alias');
-		}
+		// Don't auto-save on load - causes frequent connection checks
+		// User can manually refresh if needed
 		frappe.realtime.on('Bench-Manager:reload-page', () => {
 			frm.reload_doc();
 		});
@@ -296,6 +294,22 @@ frappe.ui.form.on('Site', {
 			// Use site_url if available, otherwise use site_name directly
 			let url = frm.doc.site_url || `http://${frm.doc.name}`;
 			window.open(url, '_blank');
+		});
+		
+		// Add manual refresh button for app list and aliases
+		frm.add_custom_button(__('Refresh Apps'), function() {
+			frm.call('update_app_alias', {}, () => {
+				frappe.show_alert({
+					message: __('App list and aliases refreshed'),
+					indicator: 'green'
+				});
+				frm.reload_doc();
+			});
+		});
+		
+		// Add Check Status button for manual connection checking
+		frm.add_custom_button(__('Check Status'), function() {
+			frm.events.check_status_button(frm);
 		});
 	}
 });
