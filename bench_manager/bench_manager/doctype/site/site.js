@@ -44,6 +44,11 @@ frappe.ui.form.on('Site', {
 	refresh: function(frm) {
 		$('a.grey-link:contains("Delete")').hide();
 
+		// Auto-populate site_url if empty
+		if (!frm.doc.site_url && frm.doc.site_name && !frm.doc.__islocal) {
+			frm.set_value('site_url', `http://${frm.doc.site_name}`);
+		}
+
 		if (frm.doc.db_name == undefined) {
 			$('div.form-inner-toolbar').hide();
 		} else {
@@ -293,16 +298,9 @@ frappe.ui.form.on('Site', {
 			});
 		});
 		frm.add_custom_button(__('View Site'), () => {
-			// Use site_url if available, otherwise fallback to site_name with port
-			if (frm.doc.site_url) {
-				window.open(frm.doc.site_url, '_blank');
-			} else {
-				frappe.db.get_value('Bench Settings', 'Bench Settings', 'webserver_port',
-					(r) => {
-						window.open(`http://${frm.doc.name}:${r.webserver_port}`, '_blank');
-					}
-				);
-			}
+			// Use site_url if available, otherwise use site_name directly
+			let url = frm.doc.site_url || `http://${frm.doc.name}`;
+			window.open(url, '_blank');
 		});
 	}
 });
