@@ -9,6 +9,7 @@
   "frappe_user",
   "column_break_2",
   "frappe_git_branch",
+  "server_ip",
   "general_settings",
   "background_workers",
   "auto_email_id",
@@ -78,6 +79,13 @@
    "fieldname": "frappe_git_branch",
    "fieldtype": "Data",
    "label": "Frappe Git Branch",
+   "read_only": 1
+  },
+  {
+   "description": "Server's public IP address for DNS configuration",
+   "fieldname": "server_ip",
+   "fieldtype": "Data",
+   "label": "Server IP Address",
    "read_only": 1
   },
   {
@@ -189,12 +197,14 @@
    "label": "Github Settings"
   },
   {
+   "description": "Your GitHub username (e.g., amitascra)",
    "fieldname": "github_username",
    "fieldtype": "Data",
-   "label": "Github Username"
+   "label": "GitHub Username"
   },
   {
    "default": "0",
+   "description": "Enable faster cloning with less disk space (recommended for production)",
    "fieldname": "shallow_clone",
    "fieldtype": "Check",
    "label": "Shallow Clone"
@@ -204,9 +214,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "GitHub Personal Access Token (PAT) - Generate at github.com/settings/tokens",
    "fieldname": "github_password",
    "fieldtype": "Password",
-   "label": "Github Password"
+   "label": "GitHub Token (PAT)"
   },
   {
    "fieldname": "mail_settings",

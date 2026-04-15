@@ -48,6 +48,26 @@ frappe.ui.form.on('Site', {
 			$('div.form-inner-toolbar').show();
 		}
 
+		// === SITE ACTIONS GROUP ===
+		frm.add_custom_button(__('View Site'), () => {
+			let url = frm.doc.site_url || `http://${frm.doc.name}`;
+			window.open(url, '_blank');
+		}, __('Site Actions'));
+		
+		frm.add_custom_button(__('Check Status'), function() {
+			frm.events.check_status_button(frm);
+		}, __('Site Actions'));
+		
+		frm.add_custom_button(__('Refresh Apps'), function() {
+			frm.call('update_app_alias', {}, () => {
+				frappe.show_alert({
+					message: __('App list and aliases refreshed'),
+					indicator: 'green'
+				});
+				frm.reload_doc();
+			});
+		}, __('Site Actions'));
+		
 		frm.add_custom_button(__('Create Alias'), function(){
 			var dialog = new frappe.ui.Dialog({
 				title: __('Alias name'),
@@ -66,7 +86,8 @@ frappe.ui.form.on('Site', {
 				});
 			});
 			dialog.show();
-		});
+		}, __('Site Actions'));
+		
 		frm.add_custom_button(__('Delete Alias'), function(){
 			let alias_list = frm.doc.site_alias.split('\n');
 			alias_list.pop();
@@ -88,7 +109,72 @@ frappe.ui.form.on('Site', {
 				});
 			});
 			dialog.show();
-		});
+		}, __('Site Actions'));
+
+		// === APP MANAGEMENT GROUP ===
+		frm.add_custom_button(__('Install App'), function(){
+			frappe.call({
+				method: 'bench_manager.bench_manager.doctype.site.site.get_installable_apps',
+				args: {
+					doctype: frm.doctype,
+					docname: frm.doc.name
+				},
+				btn: this,
+				callback: function(r) {
+					var dialog = new frappe.ui.Dialog({
+						title: __('Select app'),
+						fields: [
+							{'fieldname': 'installable_apps', 'fieldtype': 'Select', options: r.message}
+						],
+					});
+					dialog.set_primary_action(__('Install App'), () => {
+						let key = frappe.datetime.get_datetime_as_string();
+						console_dialog(key);
+						frm.call('console_command', {
+							key: key,
+							caller: 'install_app',
+							app_name: dialog.fields_dict.installable_apps.value
+						}, () => {
+							dialog.hide();
+						});
+					});
+					dialog.show();
+				}
+			});
+		}, __('App Management'));
+		
+		frm.add_custom_button(__('Uninstall App'), function(){
+			frappe.call({
+				method: 'bench_manager.bench_manager.doctype.site.site.get_removable_apps',
+				args: {
+					doctype: frm.doctype,
+					docname: frm.doc.name
+				},
+				btn: this,
+				callback: function(r) {
+					var dialog = new frappe.ui.Dialog({
+						title: __('Select app'),
+						fields: [
+							{'fieldname': 'removable_apps', 'fieldtype': 'Select', options: r.message},
+						]
+					});
+					dialog.set_primary_action(__('Uninstall App'), () => {
+						let key = frappe.datetime.get_datetime_as_string();
+						console_dialog(key);
+						frm.call('console_command', {
+							key: key,
+							caller: 'uninstall_app',
+							app_name: dialog.fields_dict.removable_apps.value
+						}, () => {
+							dialog.hide();
+						});
+					});
+					dialog.show();
+				}
+			});
+		}, __('App Management'));
+
+		// === MAINTENANCE GROUP ===
 		frm.add_custom_button(__('Migrate'), function() {
 			let key = frappe.datetime.get_datetime_as_string();
 			console_dialog(key);
@@ -96,7 +182,8 @@ frappe.ui.form.on('Site', {
 				key: key,
 				caller: 'migrate',
 			});
-		});
+		}, __('Maintenance'));
+		
 		frm.add_custom_button(__('Backup'), function() {
 			let key = frappe.datetime.get_datetime_as_string();
 			console_dialog(key);
@@ -104,7 +191,8 @@ frappe.ui.form.on('Site', {
 				key: key,
 				caller: 'backup',
 			});
-		});
+		}, __('Maintenance'));
+		
 		frm.add_custom_button(__('Reinstall'), function(){
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.pass_exists',
@@ -144,67 +232,8 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		});
-		frm.add_custom_button(__('Install App'), function(){
-			frappe.call({
-				method: 'bench_manager.bench_manager.doctype.site.site.get_installable_apps',
-				args: {
-					doctype: frm.doctype,
-					docname: frm.doc.name
-				},
-				btn: this,
-				callback: function(r) {
-					var dialog = new frappe.ui.Dialog({
-						title: __('Select app'),
-						fields: [
-							{'fieldname': 'installable_apps', 'fieldtype': 'Select', options: r.message}
-						],
-					});
-					dialog.set_primary_action(__('Install App'), () => {
-						let key = frappe.datetime.get_datetime_as_string();
-						console_dialog(key);
-						frm.call('console_command', {
-							key: key,
-							caller: 'install_app',
-							app_name: dialog.fields_dict.installable_apps.value
-						}, () => {
-							dialog.hide();
-						});
-					});
-					dialog.show();
-				}
-			});
-		});
-		frm.add_custom_button(__('Uninstall App'), function(){
-			frappe.call({
-				method: 'bench_manager.bench_manager.doctype.site.site.get_removable_apps',
-				args: {
-					doctype: frm.doctype,
-					docname: frm.doc.name
-				},
-				btn: this,
-				callback: function(r) {
-					var dialog = new frappe.ui.Dialog({
-						title: __('Select app'),
-						fields: [
-							{'fieldname': 'removable_apps', 'fieldtype': 'Select', options: r.message},
-						]
-					});
-					dialog.set_primary_action(__('Uninstall App'), () => {
-						let key = frappe.datetime.get_datetime_as_string();
-						console_dialog(key);
-						frm.call('console_command', {
-							key: key,
-							caller: 'uninstall_app',
-							app_name: dialog.fields_dict.removable_apps.value
-						}, () => {
-							dialog.hide();
-						});
-					});
-					dialog.show();
-				}
-			});
-		});
+		}, __('Maintenance'));
+		
 		frm.add_custom_button(__('Drop Site'), function(){
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.pass_exists',
@@ -218,25 +247,18 @@ frappe.ui.form.on('Site', {
 						title: __('Drop Site - Confirm'),
 						fields: [
 							{
+								fieldname: 'warning',
+								fieldtype: 'HTML',
+								options: '<div class="alert alert-danger" style="margin-bottom: 15px;"><strong>⚠️ Warning:</strong> This will permanently delete the site and all its data. This action cannot be undone!</div>'
+							},
+							{
 								fieldname: 'mysql_password',
 								fieldtype: 'Password',
 								label: 'MySQL Root Password',
 								reqd: r['message']['condition'][0] != 'T',
 								default: r['message']['root_password'],
+								description: 'Enter MySQL root password to confirm site deletion',
 								depends_on: `eval:${String(r['message']['condition'][0] != 'T')}`
-							},
-							{
-								fieldname: 'admin_password', 
-								fieldtype: 'Password',
-								label: 'Administrator Password', 
-								reqd: r['message']['condition'][1] != 'T',
-								default: (r['message']['admin_password'] ? r['message']['admin_password'] : 'admin'),
-								depends_on: `eval:${String(r['message']['condition'][1] != 'T')}`
-							},
-							{
-								fieldname: 'warning',
-								fieldtype: 'HTML',
-								options: '<div class="alert alert-danger"><strong>Warning:</strong> This will permanently delete the site and all its data. This action cannot be undone!</div>'
 							}
 						],
 					});
@@ -296,27 +318,6 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		});
-		frm.add_custom_button(__('View Site'), () => {
-			// Use site_url if available, otherwise use site_name directly
-			let url = frm.doc.site_url || `http://${frm.doc.name}`;
-			window.open(url, '_blank');
-		});
-		
-		// Add manual refresh button for app list and aliases
-		frm.add_custom_button(__('Refresh Apps'), function() {
-			frm.call('update_app_alias', {}, () => {
-				frappe.show_alert({
-					message: __('App list and aliases refreshed'),
-					indicator: 'green'
-				});
-				frm.reload_doc();
-			});
-		});
-		
-		// Add Check Status button for manual connection checking
-		frm.add_custom_button(__('Check Status'), function() {
-			frm.events.check_status_button(frm);
-		});
+		}, __('Maintenance'));
 	}
 });

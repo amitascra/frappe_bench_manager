@@ -106,11 +106,41 @@ class BenchSettings(Document):
 				"git rev-parse --abbrev-ref HEAD".split(), cwd=os.path.join("..", "apps", "frappe")
 			)
 		).strip("\n")
+		
+		# Get server IP address
+		self.server_ip = self.get_server_ip()
+	
+	def get_server_ip(self):
+		"""Get server's public IP address"""
+		import socket
+		
+		try:
+			# Try to get public IP from external service
+			import requests
+			response = requests.get('https://api.ipify.org?format=json', timeout=5)
+			if response.status_code == 200:
+				return response.json().get('ip')
+		except:
+			pass
+		
+		try:
+			# Fallback: Get local IP
+			hostname = socket.gethostname()
+			local_ip = socket.gethostbyname(hostname)
+			return local_ip
+		except:
+			return None
 
 	@frappe.whitelist()
 	def console_command(self, key, caller, app_name=None, branch_name=None):
 		commands = {
 			"bench_update": ["bench update"],
+			"bench_restart": ["sudo supervisorctl restart all"],
+			"bench_status": ["sudo supervisorctl status all"],
+			"bench_clear_cache": ["bench clear-cache"],
+			"bench_setup_requirements": ["bench setup requirements"],
+			"bench_build": ["bench build"],
+			"bench_pip_install": ["bench pip install {app_name}".format(app_name=app_name)],
 			"switch_branch": [""],
 			"get-app": ["bench get-app {app_name}".format(app_name=app_name)],
 		}
@@ -313,6 +343,66 @@ def get_time(date_time_hash):
 
 def get_hash(date_time_hash):
 	return date_time_hash.split("-")[1]
+
+
+@frappe.whitelist()
+def test_github_connection(username, token):
+	"""Test GitHub connection with provided credentials"""
+	verify_whitelisted_call()
+	import requests
+	
+	try:
+		# Test GitHub API with provided credentials
+		headers = {
+			'Authorization': f'token {token}',
+			'Accept': 'application/vnd.github.v3+json'
+		}
+		
+		response = requests.get('https://api.github.com/user', headers=headers, timeout=10)
+		
+		if response.status_code == 200:
+			user_data = response.json()
+			return {
+				'success': True,
+				'name': user_data.get('name') or user_data.get('login'),
+				'login': user_data.get('login'),
+				'public_repos': user_data.get('public_repos', 0),
+				'total_private_repos': user_data.get('total_private_repos', 0),
+				'email': user_data.get('email')
+			}
+		elif response.status_code == 401:
+			return {
+				'success': False,
+				'error': 'Invalid credentials. Please check your Personal Access Token.'
+			}
+		elif response.status_code == 403:
+			return {
+				'success': False,
+				'error': 'Access forbidden. Token may not have required permissions (needs "repo" scope).'
+			}
+		else:
+			return {
+				'success': False,
+				'error': f'GitHub API error: {response.status_code}'
+			}
+			
+	except requests.exceptions.Timeout:
+		return {
+			'success': False,
+			'error': 'Connection timeout. Please check your internet connection.'
+		}
+	except requests.exceptions.RequestException as e:
+		frappe.log_error(f"GitHub connection test failed: {str(e)}", "GitHub Test Error")
+		return {
+			'success': False,
+			'error': f'Connection error: {str(e)}'
+		}
+	except Exception as e:
+		frappe.log_error(f"Unexpected error testing GitHub: {str(e)}", "GitHub Test Error")
+		return {
+			'success': False,
+			'error': 'Unexpected error occurred. Please check error logs.'
+		}
 
 
 @frappe.whitelist()
