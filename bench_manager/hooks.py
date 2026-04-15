@@ -125,14 +125,3 @@ scheduler_events = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "bench_manager.event.get_events"
 # }
-
-# Fixtures
-# --------
-fixtures = [
-	{
-		"dt": "Workspace",
-		"filters": [
-			["module", "=", "Bench Manager"]
-		]
-	}
-]
