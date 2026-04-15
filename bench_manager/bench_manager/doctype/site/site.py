@@ -220,8 +220,25 @@ class Site(Document):
 	):
 		# Use Bench Settings passwords instead of hardcoded dev_config
 		bench_settings = frappe.get_single("Bench Settings")
-		admin_password = admin_password or bench_settings.get("admin_password") or ""
-		mysql_password = mysql_password or bench_settings.get("mysql_root_password") or ""
+		
+		# Get passwords with fallback
+		if not admin_password:
+			admin_password = bench_settings.get("admin_password") or ""
+		if not mysql_password:
+			mysql_password = bench_settings.get("mysql_root_password") or ""
+		
+		# Log for debugging (without exposing actual passwords)
+		frappe.log_error(
+			f"console_command called: caller={caller}, admin_pwd_set={bool(admin_password)}, mysql_pwd_set={bool(mysql_password)}",
+			"Bench Manager Password Debug"
+		)
+		
+		# Validate passwords for operations that need them
+		if caller in ["reinstall", "drop_site"]:
+			if not mysql_password:
+				frappe.throw("MySQL Root Password is required. Please set it in Bench Settings > Password Settings > MySQL Root Password")
+			if caller == "reinstall" and not admin_password:
+				frappe.throw("Admin Password is required. Please set it in Bench Settings > Password Settings > Default Admin Password")
 		
 		site_abspath = None
 		if alias:
@@ -236,7 +253,7 @@ class Site(Document):
 				"bench --site {site_name} backup --with-files".format(site_name=self.name)
 			],
 			"reinstall": [
-				"bench --site {site_name} reinstall --yes --admin-password {admin_password} --mariadb-root-password {mysql_password}".format(
+				"bench --site {site_name} reinstall --yes --admin-password '{admin_password}' --mariadb-root-password '{mysql_password}'".format(
 					site_name=self.name, admin_password=admin_password, mysql_password=mysql_password
 				)
 			],
@@ -346,16 +363,46 @@ def pass_exists(doctype, docname=""):
 
 
 @frappe.whitelist()
+def get_bench_settings_passwords():
+	"""Debug method to check what passwords are stored in Bench Settings"""
+	verify_whitelisted_call()
+	try:
+		bench_settings = frappe.get_single("Bench Settings")
+		return {
+			"admin_password_set": bool(bench_settings.get("admin_password")),
+			"mysql_root_password_set": bool(bench_settings.get("mysql_root_password")),
+			"password_root_set": bool(bench_settings.get("password_root")),
+			"admin_password_length": len(bench_settings.get("admin_password") or ""),
+			"mysql_root_password_length": len(bench_settings.get("mysql_root_password") or ""),
+			"password_root_length": len(bench_settings.get("password_root") or "")
+		}
+	except Exception as e:
+		return {"error": str(e)}
+
+
+@frappe.whitelist()
 def verify_password(site_name, mysql_password):
 	verify_whitelisted_call()
+	
+	# If no password provided, try to get from Bench Settings
+	if not mysql_password:
+		try:
+			bench_settings = frappe.get_single("Bench Settings")
+			mysql_password = bench_settings.get("mysql_root_password") or ""
+			if not mysql_password:
+				frappe.throw("MySQL Root Password not set in Bench Settings. Please set it in Bench Settings > Password Settings > MySQL Root Password")
+		except Exception as e:
+			frappe.log_error(f"Error getting MySQL password from Bench Settings: {str(e)}")
+			frappe.throw("Could not retrieve MySQL password from Bench Settings")
+	
 	try:
 		db = pymysql.connect(
 			host=frappe.conf.db_host or "localhost", user="root", passwd=mysql_password
 		)
 		db.close()
 	except Exception as e:
-		print(e)
-		frappe.throw("MySQL password is incorrect")
+		frappe.log_error(f"MySQL connection failed: {str(e)}")
+		frappe.throw(f"MySQL password is incorrect. Please verify the password in Bench Settings > Password Settings > MySQL Root Password. Error: {str(e)}")
 	return "console"
 
 

@@ -381,20 +381,26 @@ frappe.ui.form.on('Bench Settings', {
 			});
 		});
 		frm.add_custom_button("Reload", () => {
-			frappe.prompt([
-	  {
-		  label: 'Root Password',
-		  fieldname: 'password',
-		  fieldtype: 'Password'
-	  },
-		  ], (values) => {
-		  frappe.call({
-				  method: "bench_manager.bench_manager.doctype.bench_settings.bench_settings.setup_and_restart_nginx",
-				  args: {
-					  "root_password": values.password
-				  }
-			  });
-		  })
+			// Use password_root from Bench Settings
+			let root_password = frm.doc.password_root;
+			
+			if (!root_password) {
+				frappe.msgprint({
+					title: __('Password Required'),
+					message: __('Please set Root User Password in Bench Settings > Password Settings > Password Root field'),
+					indicator: 'red'
+				});
+				return;
+			}
+			
+			frappe.call({
+				method: "bench_manager.bench_manager.doctype.bench_settings.bench_settings.setup_and_restart_nginx",
+				args: {
+					"root_password": root_password
+				},
+				freeze: true,
+				freeze_message: __("Reloading Nginx...")
+			});
 		});
 	},
 	allow_dropbox_access: function(frm) {
