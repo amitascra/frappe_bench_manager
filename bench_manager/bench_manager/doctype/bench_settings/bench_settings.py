@@ -805,44 +805,58 @@ def generate_pkg_info(app_name):
 		}
 	
 	try:
-		# Run pip install -e . in the app directory
 		import subprocess
-		result = subprocess.run(
-			["pip", "install", "-e", ".", "--no-deps"],
-			cwd=app_path,
-			capture_output=True,
-			text=True,
-			timeout=60
-		)
+		
+		# Method 1: Try python setup.py egg_info (most reliable)
+		if os.path.exists(setup_py):
+			result = subprocess.run(
+				[sys.executable, "setup.py", "egg_info"],
+				cwd=app_path,
+				capture_output=True,
+				text=True,
+				timeout=60
+			)
+		# Method 2: Try pip install -e for pyproject.toml based apps
+		else:
+			result = subprocess.run(
+				["pip", "install", "-e", ".", "--no-deps"],
+				cwd=app_path,
+				capture_output=True,
+				text=True,
+				timeout=60
+			)
 		
 		if result.returncode == 0:
-			# Verify PKG-INFO was created
-			pkg_info_path = os.path.join(app_path, f"{app_name}.egg-info", "PKG-INFO")
-			if os.path.isfile(pkg_info_path):
-				return {
-					"success": True,
-					"message": f"PKG-INFO generated successfully for {app_name}",
-					"pkg_info_path": pkg_info_path
-				}
-			else:
-				# Check if egg-info directory was created with different name
-				egg_info_dirs = [d for d in os.listdir(app_path) if d.endswith('.egg-info')]
-				if egg_info_dirs:
-					actual_pkg_info = os.path.join(app_path, egg_info_dirs[0], "PKG-INFO")
-					if os.path.isfile(actual_pkg_info):
-						return {
-							"success": True,
-							"message": f"PKG-INFO generated successfully for {app_name}",
-							"pkg_info_path": actual_pkg_info,
-							"note": f"egg-info directory name: {egg_info_dirs[0]}"
-						}
+			# Find the egg-info directory (it might have different naming)
+			egg_info_dirs = [d for d in os.listdir(app_path) if d.endswith('.egg-info') and os.path.isdir(os.path.join(app_path, d))]
+			
+			if egg_info_dirs:
+				# Use the first egg-info directory found
+				egg_info_dir = egg_info_dirs[0]
+				pkg_info_path = os.path.join(app_path, egg_info_dir, "PKG-INFO")
 				
+				if os.path.isfile(pkg_info_path):
+					return {
+						"success": True,
+						"message": f"PKG-INFO generated successfully for {app_name}",
+						"pkg_info_path": pkg_info_path,
+						"egg_info_dir": egg_info_dir
+					}
+				else:
+					return {
+						"success": False,
+						"message": f"egg-info directory created but PKG-INFO file is missing",
+						"output": result.stdout,
+						"error": result.stderr,
+						"egg_info_dir": egg_info_dir
+					}
+			else:
 				return {
 					"success": False,
-					"message": f"pip install completed but PKG-INFO not found at expected location",
+					"message": f"Command completed but no .egg-info directory was created",
 					"output": result.stdout,
 					"error": result.stderr,
-					"details": f"Expected: {pkg_info_path}"
+					"details": "This usually means the setup.py or pyproject.toml has errors"
 				}
 		else:
 			return {

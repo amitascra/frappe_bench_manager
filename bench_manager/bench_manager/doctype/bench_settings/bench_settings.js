@@ -312,7 +312,7 @@ window.fix_single_app = function(app_name) {
 
 window.fix_all_missing_pkg_info = function(dialog, data) {
 	frappe.confirm(
-		__('This will run "pip install -e ." for all apps missing PKG-INFO. Continue?'),
+		__('This will run "python setup.py egg_info" for all apps missing PKG-INFO. Continue?'),
 		function() {
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.generate_all_missing_pkg_info',
