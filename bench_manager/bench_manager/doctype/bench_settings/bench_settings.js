@@ -107,6 +107,9 @@ frappe.ui.form.on('Bench Settings', {
 				method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_all'
 			});
 		});
+		frm.add_custom_button(__('App Debugger'), () => {
+			show_app_debugger_dialog();
+		});
 		frm.add_custom_button("Reload", () => {
 			frappe.prompt([
 	  {
@@ -152,3 +155,205 @@ frappe.ui.form.on('Bench Settings', {
 		}
 	}
 });
+
+function show_app_debugger_dialog() {
+	frappe.call({
+		method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.get_app_debug_info',
+		freeze: true,
+		freeze_message: __('Scanning apps...'),
+		callback: function(r) {
+			if (!r.exc && r.message) {
+				let data = r.message;
+				
+				// Create dialog
+				let dialog = new frappe.ui.Dialog({
+					title: __('App Debugger - PKG-INFO Status'),
+					size: 'extra-large',
+					fields: [
+						{
+							fieldtype: 'HTML',
+							fieldname: 'summary_html'
+						},
+						{
+							fieldtype: 'HTML',
+							fieldname: 'apps_html'
+						}
+					],
+					primary_action_label: __('Fix All Missing'),
+					primary_action: function() {
+						fix_all_missing_pkg_info(dialog, data);
+					}
+				});
+				
+				// Summary section
+				let summary_html = `
+					<div class="app-debugger-summary" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+						<h4 style="margin-top: 0;">Summary</h4>
+						<div class="row">
+							<div class="col-md-4">
+								<div style="text-align: center; padding: 10px;">
+									<div style="font-size: 32px; font-weight: bold; color: #5e64ff;">${data.total_apps}</div>
+									<div style="color: #6c757d;">Total Apps</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div style="text-align: center; padding: 10px;">
+									<div style="font-size: 32px; font-weight: bold; color: #28a745;">${data.apps_with_pkg_info}</div>
+									<div style="color: #6c757d;">With PKG-INFO</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div style="text-align: center; padding: 10px;">
+									<div style="font-size: 32px; font-weight: bold; color: #dc3545;">${data.apps_missing_pkg_info}</div>
+									<div style="color: #6c757d;">Missing PKG-INFO</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				`;
+				
+				// Apps table
+				let apps_html = `
+					<div class="app-debugger-apps">
+						<h4>App Details</h4>
+						<table class="table table-bordered" style="margin-top: 10px;">
+							<thead>
+								<tr>
+									<th style="width: 20%;">App Name</th>
+									<th style="width: 15%;">Status</th>
+									<th style="width: 15%;">Version</th>
+									<th style="width: 35%;">Details</th>
+									<th style="width: 15%;">Action</th>
+								</tr>
+							</thead>
+							<tbody>
+				`;
+				
+				data.apps.forEach(app => {
+					let status_badge = '';
+					let action_btn = '';
+					
+					if (app.status === 'OK') {
+						status_badge = '<span class="badge badge-success">OK</span>';
+						action_btn = '<span class="text-muted">No action needed</span>';
+					} else if (app.status === 'Missing PKG-INFO') {
+						status_badge = '<span class="badge badge-warning">Missing PKG-INFO</span>';
+						action_btn = `<button class="btn btn-xs btn-primary" onclick="fix_single_app('${app.app_name}')">Generate PKG-INFO</button>`;
+					} else {
+						status_badge = '<span class="badge badge-danger">Missing egg-info</span>';
+						action_btn = `<button class="btn btn-xs btn-primary" onclick="fix_single_app('${app.app_name}')">Generate PKG-INFO</button>`;
+					}
+					
+					apps_html += `
+						<tr>
+							<td><strong>${app.app_name}</strong></td>
+							<td>${status_badge}</td>
+							<td>${app.version || '<span class="text-muted">N/A</span>'}</td>
+							<td><small>${app.details}</small></td>
+							<td>${action_btn}</td>
+						</tr>
+					`;
+				});
+				
+				apps_html += `
+							</tbody>
+						</table>
+					</div>
+				`;
+				
+				dialog.fields_dict.summary_html.$wrapper.html(summary_html);
+				dialog.fields_dict.apps_html.$wrapper.html(apps_html);
+				
+				// Hide primary action if no missing apps
+				if (data.apps_missing_pkg_info === 0) {
+					dialog.set_primary_action_label(__('Close'));
+					dialog.set_primary_action(function() {
+						dialog.hide();
+					});
+				}
+				
+				dialog.show();
+			}
+		}
+	});
+}
+
+function fix_single_app(app_name) {
+	frappe.call({
+		method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.generate_pkg_info',
+		args: {
+			app_name: app_name
+		},
+		freeze: true,
+		freeze_message: __('Generating PKG-INFO for {0}...', [app_name]),
+		callback: function(r) {
+			if (!r.exc && r.message) {
+				if (r.message.success) {
+					frappe.show_alert({
+						message: r.message.message,
+						indicator: 'green'
+					}, 5);
+					// Refresh the dialog
+					setTimeout(() => {
+						show_app_debugger_dialog();
+					}, 1000);
+				} else {
+					frappe.msgprint({
+						title: __('Error'),
+						message: r.message.message + '<br><br>' + 
+							(r.message.error ? '<pre>' + r.message.error + '</pre>' : ''),
+						indicator: 'red'
+					});
+				}
+			}
+		}
+	});
+}
+
+function fix_all_missing_pkg_info(dialog, data) {
+	frappe.confirm(
+		__('This will run "pip install -e ." for all apps missing PKG-INFO. Continue?'),
+		function() {
+			frappe.call({
+				method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.generate_all_missing_pkg_info',
+				freeze: true,
+				freeze_message: __('Generating PKG-INFO for all missing apps...'),
+				callback: function(r) {
+					if (!r.exc && r.message) {
+						let success_count = 0;
+						let fail_count = 0;
+						
+						r.message.results.forEach(result => {
+							if (result.result.success) {
+								success_count++;
+							} else {
+								fail_count++;
+							}
+						});
+						
+						let message = `
+							<div>
+								<p><strong>PKG-INFO Generation Complete</strong></p>
+								<p>✓ Success: ${success_count}</p>
+								<p>✗ Failed: ${fail_count}</p>
+							</div>
+						`;
+						
+						frappe.msgprint({
+							title: __('Results'),
+							message: message,
+							indicator: fail_count === 0 ? 'green' : 'orange'
+						});
+						
+						dialog.hide();
+						
+						// Refresh the dialog after a moment
+						setTimeout(() => {
+							show_app_debugger_dialog();
+						}, 1500);
+					}
+				}
+			});
+		}
+	);
+}

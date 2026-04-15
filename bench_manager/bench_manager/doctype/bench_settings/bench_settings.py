@@ -718,3 +718,145 @@ def generate_oauth2_access_token_from_oauth1_token(dropbox_settings=None):
 	}
 
 	return make_post_request(url, auth=auth, headers=headers, data=json.dumps(data))
+
+
+@frappe.whitelist()
+def get_app_debug_info():
+	"""Scan all apps and check for PKG-INFO files"""
+	verify_whitelisted_call()
+	
+	apps_dir = os.path.join("..", "apps")
+	app_list = update_app_list()
+	app_debug_data = []
+	
+	for app in app_list:
+		if not app:
+			continue
+			
+		app_info = {
+			"app_name": app,
+			"app_path": os.path.join(apps_dir, app),
+			"has_pkg_info": False,
+			"pkg_info_path": "",
+			"egg_info_dir": "",
+			"status": "Missing",
+			"details": ""
+		}
+		
+		# Check for .egg-info directory
+		egg_info_dir = os.path.join(apps_dir, app, f"{app}.egg-info")
+		if os.path.exists(egg_info_dir):
+			app_info["egg_info_dir"] = egg_info_dir
+			
+			# Check for PKG-INFO file
+			pkg_info_path = os.path.join(egg_info_dir, "PKG-INFO")
+			if os.path.isfile(pkg_info_path):
+				app_info["has_pkg_info"] = True
+				app_info["pkg_info_path"] = pkg_info_path
+				app_info["status"] = "OK"
+				app_info["details"] = "PKG-INFO exists"
+				
+				# Read version from PKG-INFO
+				try:
+					with open(pkg_info_path, 'r') as f:
+						for line in f:
+							if line.startswith('Version:'):
+								app_info["version"] = line.split(':', 1)[1].strip()
+								break
+				except:
+					pass
+			else:
+				app_info["status"] = "Missing PKG-INFO"
+				app_info["details"] = f"egg-info directory exists but PKG-INFO is missing"
+		else:
+			app_info["status"] = "Missing egg-info"
+			app_info["details"] = f"No {app}.egg-info directory found"
+		
+		app_debug_data.append(app_info)
+	
+	return {
+		"total_apps": len([a for a in app_list if a]),
+		"apps_with_pkg_info": len([a for a in app_debug_data if a["has_pkg_info"]]),
+		"apps_missing_pkg_info": len([a for a in app_debug_data if not a["has_pkg_info"]]),
+		"apps": app_debug_data
+	}
+
+
+@frappe.whitelist()
+def generate_pkg_info(app_name):
+	"""Generate PKG-INFO for a specific app by running pip install -e"""
+	verify_whitelisted_call()
+	
+	apps_dir = os.path.join("..", "apps")
+	app_path = os.path.join(apps_dir, app_name)
+	
+	if not os.path.exists(app_path):
+		frappe.throw(f"App directory not found: {app_path}")
+	
+	try:
+		# Run pip install -e . in the app directory
+		import subprocess
+		result = subprocess.run(
+			["pip", "install", "-e", ".", "--no-deps"],
+			cwd=app_path,
+			capture_output=True,
+			text=True,
+			timeout=60
+		)
+		
+		if result.returncode == 0:
+			# Verify PKG-INFO was created
+			pkg_info_path = os.path.join(app_path, f"{app_name}.egg-info", "PKG-INFO")
+			if os.path.isfile(pkg_info_path):
+				return {
+					"success": True,
+					"message": f"PKG-INFO generated successfully for {app_name}",
+					"pkg_info_path": pkg_info_path
+				}
+			else:
+				return {
+					"success": False,
+					"message": f"pip install completed but PKG-INFO not found",
+					"output": result.stdout,
+					"error": result.stderr
+				}
+		else:
+			return {
+				"success": False,
+				"message": f"Failed to generate PKG-INFO for {app_name}",
+				"output": result.stdout,
+				"error": result.stderr
+			}
+	except subprocess.TimeoutExpired:
+		return {
+			"success": False,
+			"message": f"Timeout while generating PKG-INFO for {app_name}"
+		}
+	except Exception as e:
+		frappe.log_error(f"Error generating PKG-INFO for {app_name}: {str(e)}")
+		return {
+			"success": False,
+			"message": f"Error: {str(e)}"
+		}
+
+
+@frappe.whitelist()
+def generate_all_missing_pkg_info():
+	"""Generate PKG-INFO for all apps that are missing it"""
+	verify_whitelisted_call()
+	
+	debug_info = get_app_debug_info()
+	results = []
+	
+	for app_info in debug_info["apps"]:
+		if not app_info["has_pkg_info"]:
+			result = generate_pkg_info(app_info["app_name"])
+			results.append({
+				"app_name": app_info["app_name"],
+				"result": result
+			})
+	
+	return {
+		"total_processed": len(results),
+		"results": results
+	}
