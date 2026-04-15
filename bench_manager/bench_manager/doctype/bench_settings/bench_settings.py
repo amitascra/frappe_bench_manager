@@ -744,20 +744,46 @@ def get_app_debug_info():
 		}
 		
 		# Check for .egg-info or .dist-info directory (modern packages use .dist-info)
+		# Check in both app directory AND virtual environment
+		import glob
+		import site
+		
+		# Location 1: App directory (for development)
 		egg_info_dir = os.path.join(apps_dir, app, f"{app}.egg-info")
 		dist_info_pattern = os.path.join(apps_dir, app, f"{app}-*.dist-info")
-		
-		# Try to find dist-info directory
-		import glob
 		dist_info_dirs = glob.glob(dist_info_pattern)
 		
 		metadata_dir = None
+		metadata_location = None
+		
 		if os.path.exists(egg_info_dir):
 			metadata_dir = egg_info_dir
 			app_info["metadata_type"] = "egg-info"
+			metadata_location = "app"
 		elif dist_info_dirs:
 			metadata_dir = dist_info_dirs[0]
 			app_info["metadata_type"] = "dist-info"
+			metadata_location = "app"
+		else:
+			# Location 2: Virtual environment site-packages (after bench setup requirements)
+			site_packages = site.getsitepackages()
+			for site_pkg in site_packages:
+				# Check for egg-info in site-packages
+				venv_egg_info = os.path.join(site_pkg, f"{app}.egg-info")
+				if os.path.exists(venv_egg_info):
+					metadata_dir = venv_egg_info
+					app_info["metadata_type"] = "egg-info"
+					metadata_location = "venv"
+					break
+				
+				# Check for dist-info in site-packages
+				venv_dist_pattern = os.path.join(site_pkg, f"{app}-*.dist-info")
+				venv_dist_dirs = glob.glob(venv_dist_pattern)
+				if venv_dist_dirs:
+					metadata_dir = venv_dist_dirs[0]
+					app_info["metadata_type"] = "dist-info"
+					metadata_location = "venv"
+					break
 		
 		if metadata_dir:
 			app_info["egg_info_dir"] = metadata_dir
@@ -770,7 +796,8 @@ def get_app_debug_info():
 				app_info["has_pkg_info"] = True
 				app_info["pkg_info_path"] = pkg_info_path
 				app_info["status"] = "OK"
-				app_info["details"] = f"PKG-INFO exists ({app_info['metadata_type']})"
+				location_text = "in app dir" if metadata_location == "app" else "in venv"
+				app_info["details"] = f"PKG-INFO exists ({app_info['metadata_type']}, {location_text})"
 				
 				# Read version from PKG-INFO
 				try:
@@ -785,7 +812,8 @@ def get_app_debug_info():
 				app_info["has_pkg_info"] = True
 				app_info["pkg_info_path"] = metadata_path
 				app_info["status"] = "OK"
-				app_info["details"] = f"METADATA exists ({app_info['metadata_type']})"
+				location_text = "in app dir" if metadata_location == "app" else "in venv"
+				app_info["details"] = f"METADATA exists ({app_info['metadata_type']}, {location_text})"
 				
 				# Read version from METADATA
 				try:

@@ -33,6 +33,7 @@ class App(Document):
 			if self.developer_flag == 0:
 				frappe.throw("Creation of new apps is not supported at the moment!")
 			self.developer_flag = 0
+			# Wait for PKG-INFO with timeout (max 30 seconds)
 			app_data_path = os.path.join(
 				"..",
 				"apps",
@@ -40,8 +41,11 @@ class App(Document):
 				"{app_name}.egg-info".format(app_name=self.app_name),
 				"PKG-INFO",
 			)
-			while not os.path.isfile(app_data_path):
+			wait_time = 0
+			max_wait = 30
+			while not os.path.isfile(app_data_path) and wait_time < max_wait:
 				time.sleep(2)
+				wait_time += 2
 			self.update_app_details()
 		else:
 			if self.developer_flag == 0:
@@ -80,6 +84,13 @@ class App(Document):
 				check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
 
 	def update_app_details(self):
+		import glob
+		import site
+		
+		# Try multiple locations for PKG-INFO/METADATA
+		metadata_file = None
+		
+		# Location 1: App directory .egg-info
 		pkg_info_file = os.path.join(
 			"..",
 			"apps",
@@ -88,8 +99,45 @@ class App(Document):
 			"PKG-INFO",
 		)
 		if os.path.isfile(pkg_info_file):
-			app_data_path = pkg_info_file
-			with open(app_data_path, "r") as f:
+			metadata_file = pkg_info_file
+		else:
+			# Location 2: App directory .dist-info
+			dist_info_pattern = os.path.join("..", "apps", self.app_name, f"{self.app_name}-*.dist-info")
+			dist_info_dirs = glob.glob(dist_info_pattern)
+			if dist_info_dirs:
+				# Try PKG-INFO first, then METADATA
+				pkg_info_path = os.path.join(dist_info_dirs[0], "PKG-INFO")
+				metadata_path = os.path.join(dist_info_dirs[0], "METADATA")
+				if os.path.isfile(pkg_info_path):
+					metadata_file = pkg_info_path
+				elif os.path.isfile(metadata_path):
+					metadata_file = metadata_path
+			
+			# Location 3: Virtual environment site-packages
+			if not metadata_file:
+				site_packages = site.getsitepackages()
+				for site_pkg in site_packages:
+					# Check egg-info in venv
+					venv_pkg_info = os.path.join(site_pkg, f"{self.app_name}.egg-info", "PKG-INFO")
+					if os.path.isfile(venv_pkg_info):
+						metadata_file = venv_pkg_info
+						break
+					
+					# Check dist-info in venv
+					venv_dist_pattern = os.path.join(site_pkg, f"{self.app_name}-*.dist-info")
+					venv_dist_dirs = glob.glob(venv_dist_pattern)
+					if venv_dist_dirs:
+						pkg_info_path = os.path.join(venv_dist_dirs[0], "PKG-INFO")
+						metadata_path = os.path.join(venv_dist_dirs[0], "METADATA")
+						if os.path.isfile(pkg_info_path):
+							metadata_file = pkg_info_path
+							break
+						elif os.path.isfile(metadata_path):
+							metadata_file = metadata_path
+							break
+		
+		if metadata_file:
+			with open(metadata_file, "r") as f:
 				app_data = f.readlines()
 			app_data = frappe.as_unicode("".join(app_data)).split("\n")
 			if "" in app_data:
@@ -119,11 +167,23 @@ class App(Document):
 				self.current_git_branch = None
 				self.is_git_repo = False
 		else:
-			frappe.throw(
-				"Hey developer, the app you're trying to create an \
-				instance of doesn't actually exist. You could consider setting \
-				developer flag to 0 to actually create the app"
-			)
+			# Gracefully handle missing metadata - set defaults from app name
+			self.app_title = self.app_name.replace("-", " ").replace("_", " ").title()
+			self.version = "Unknown"
+			self.app_description = f"App: {self.app_name}"
+			self.app_publisher = "Unknown"
+			self.app_email = ""
+			if os.path.isdir(os.path.join("..", "apps", self.app_name, ".git")):
+				self.current_git_branch = safe_decode(
+					check_output(
+						"git rev-parse --abbrev-ref HEAD".split(),
+						cwd=os.path.join("..", "apps", self.app_name),
+					)
+				).strip("\n")
+				self.is_git_repo = True
+			else:
+				self.current_git_branch = None
+				self.is_git_repo = False
 
 	@frappe.whitelist()
 	def pull_rebase(self, key, remote):
