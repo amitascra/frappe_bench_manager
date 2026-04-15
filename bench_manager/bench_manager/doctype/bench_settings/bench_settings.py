@@ -743,18 +743,34 @@ def get_app_debug_info():
 			"details": ""
 		}
 		
-		# Check for .egg-info directory
+		# Check for .egg-info or .dist-info directory (modern packages use .dist-info)
 		egg_info_dir = os.path.join(apps_dir, app, f"{app}.egg-info")
+		dist_info_pattern = os.path.join(apps_dir, app, f"{app}-*.dist-info")
+		
+		# Try to find dist-info directory
+		import glob
+		dist_info_dirs = glob.glob(dist_info_pattern)
+		
+		metadata_dir = None
 		if os.path.exists(egg_info_dir):
-			app_info["egg_info_dir"] = egg_info_dir
+			metadata_dir = egg_info_dir
+			app_info["metadata_type"] = "egg-info"
+		elif dist_info_dirs:
+			metadata_dir = dist_info_dirs[0]
+			app_info["metadata_type"] = "dist-info"
+		
+		if metadata_dir:
+			app_info["egg_info_dir"] = metadata_dir
 			
-			# Check for PKG-INFO file
-			pkg_info_path = os.path.join(egg_info_dir, "PKG-INFO")
+			# Check for PKG-INFO or METADATA file
+			pkg_info_path = os.path.join(metadata_dir, "PKG-INFO")
+			metadata_path = os.path.join(metadata_dir, "METADATA")
+			
 			if os.path.isfile(pkg_info_path):
 				app_info["has_pkg_info"] = True
 				app_info["pkg_info_path"] = pkg_info_path
 				app_info["status"] = "OK"
-				app_info["details"] = "PKG-INFO exists"
+				app_info["details"] = f"PKG-INFO exists ({app_info['metadata_type']})"
 				
 				# Read version from PKG-INFO
 				try:
@@ -765,12 +781,27 @@ def get_app_debug_info():
 								break
 				except:
 					pass
+			elif os.path.isfile(metadata_path):
+				app_info["has_pkg_info"] = True
+				app_info["pkg_info_path"] = metadata_path
+				app_info["status"] = "OK"
+				app_info["details"] = f"METADATA exists ({app_info['metadata_type']})"
+				
+				# Read version from METADATA
+				try:
+					with open(metadata_path, 'r') as f:
+						for line in f:
+							if line.startswith('Version:'):
+								app_info["version"] = line.split(':', 1)[1].strip()
+								break
+				except:
+					pass
 			else:
 				app_info["status"] = "Missing PKG-INFO"
-				app_info["details"] = f"egg-info directory exists but PKG-INFO is missing"
+				app_info["details"] = f"Metadata directory exists but PKG-INFO/METADATA is missing"
 		else:
-			app_info["status"] = "Missing egg-info"
-			app_info["details"] = f"No {app}.egg-info directory found"
+			app_info["status"] = "Missing metadata"
+			app_info["details"] = f"No .egg-info or .dist-info directory found"
 		
 		app_debug_data.append(app_info)
 	
@@ -838,38 +869,54 @@ def generate_pkg_info(app_name):
 			)
 		
 		if result.returncode == 0:
-			# Find the egg-info directory (it might have different naming)
+			# Find the metadata directory (can be .egg-info or .dist-info)
+			import glob
 			egg_info_dirs = [d for d in os.listdir(app_path) if d.endswith('.egg-info') and os.path.isdir(os.path.join(app_path, d))]
+			dist_info_pattern = os.path.join(app_path, f"{app_name}-*.dist-info")
+			dist_info_dirs = [os.path.basename(d) for d in glob.glob(dist_info_pattern)]
 			
-			if egg_info_dirs:
-				# Use the first egg-info directory found
-				egg_info_dir = egg_info_dirs[0]
-				pkg_info_path = os.path.join(app_path, egg_info_dir, "PKG-INFO")
+			metadata_dirs = egg_info_dirs + dist_info_dirs
+			
+			if metadata_dirs:
+				# Use the first metadata directory found
+				metadata_dir = metadata_dirs[0]
+				metadata_type = "dist-info" if metadata_dir.endswith('.dist-info') else "egg-info"
+				
+				# Check for PKG-INFO or METADATA file
+				pkg_info_path = os.path.join(app_path, metadata_dir, "PKG-INFO")
+				metadata_path = os.path.join(app_path, metadata_dir, "METADATA")
 				
 				if os.path.isfile(pkg_info_path):
 					return {
 						"success": True,
-						"message": f"PKG-INFO generated successfully for {app_name}",
+						"message": f"PKG-INFO generated successfully for {app_name} ({metadata_type})",
 						"pkg_info_path": pkg_info_path,
-						"egg_info_dir": egg_info_dir
+						"metadata_dir": metadata_dir
+					}
+				elif os.path.isfile(metadata_path):
+					return {
+						"success": True,
+						"message": f"METADATA generated successfully for {app_name} ({metadata_type})",
+						"pkg_info_path": metadata_path,
+						"metadata_dir": metadata_dir
 					}
 				else:
 					return {
 						"success": False,
-						"message": f"egg-info directory created but PKG-INFO file is missing",
+						"message": f"Metadata directory created but PKG-INFO/METADATA file is missing",
 						"output": result.stdout,
 						"error": result.stderr,
-						"egg_info_dir": egg_info_dir
+						"metadata_dir": metadata_dir
 					}
 			else:
 				# List all directories to help debug
 				all_dirs = [d for d in os.listdir(app_path) if os.path.isdir(os.path.join(app_path, d))]
 				return {
 					"success": False,
-					"message": f"Command completed but no .egg-info directory was created",
+					"message": f"Command completed but no metadata directory (.egg-info or .dist-info) was created",
 					"output": result.stdout if result.stdout else "No output",
 					"error": result.stderr if result.stderr else "No errors",
-					"details": f"This usually means the setup.py has errors or is incomplete. Directories in app: {', '.join(all_dirs[:10])}"
+					"details": f"This usually means the setup.py/pyproject.toml has errors. Directories in app: {', '.join(all_dirs[:10])}"
 				}
 		else:
 			return {
