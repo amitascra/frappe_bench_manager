@@ -194,8 +194,20 @@ class App(Document):
 
 	@frappe.whitelist()
 	def console_command(self, key, caller, branch_name=None, remote=None, commit_msg=None):
+		# Get git user configuration from Bench Settings
+		bench_settings = frappe.get_single("Bench Settings")
+		github_username = bench_settings.get("github_username") or ""
+		git_user_email = bench_settings.get("git_user_email") or ""
+		
+		# Prepare git config commands if credentials are available
+		git_config_commands = []
+		if github_username:
+			git_config_commands.append(f'git config user.name "{github_username}"')
+		if git_user_email:
+			git_config_commands.append(f'git config user.email "{git_user_email}"')
+		
 		commands = {
-			"git_init": ["git init", "git add .", "git commit -m 'Initial Commit'"],
+			"git_init": git_config_commands + ["git init", "git add .", "git commit -m 'Initial Commit'"],
 			"switch_branch": ["git checkout {branch_name}".format(branch_name=branch_name)],
 			"new_branch": ["git branch {branch_name}".format(branch_name=branch_name)],
 			"delete_branch": ["git branch -D {branch_name}".format(branch_name=branch_name)],
@@ -210,7 +222,7 @@ class App(Document):
 					branch_name=branch_name, remote=remote
 				)
 			],
-			"commit": [
+			"commit": git_config_commands + [
 				"git add .",
 				'git commit -m "{commit_msg}"'.format(commit_msg=commit_msg),
 			],

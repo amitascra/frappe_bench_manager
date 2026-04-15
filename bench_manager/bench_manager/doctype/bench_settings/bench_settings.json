@@ -43,6 +43,7 @@
   "shallow_clone",
   "section_break_37",
   "github_password",
+  "git_user_email",
   "mail_settings",
   "mail_port",
   "mail_server",
@@ -218,6 +219,12 @@
    "fieldname": "github_password",
    "fieldtype": "Password",
    "label": "GitHub Token (PAT)"
+  },
+  {
+   "description": "Your email for git commits (e.g., amit@example.com)",
+   "fieldname": "git_user_email",
+   "fieldtype": "Data",
+   "label": "Git User Email"
   },
   {
    "fieldname": "mail_settings",

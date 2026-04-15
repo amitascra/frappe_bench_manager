@@ -438,6 +438,144 @@ frappe.ui.form.on('Bench Settings', {
 		}, __('Bench Operations'));
 		
 		// === CONFIGURATION GROUP ===
+		frm.add_custom_button(__('Setup GitHub'), () => {
+			const dialog = new frappe.ui.Dialog({
+				title: __('GitHub Configuration'),
+				fields: [
+					{
+						fieldname: 'info',
+						fieldtype: 'HTML',
+						options: `
+							<div style="padding: 15px; background: #f8f9fa; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #5e64ff;">
+								<div style="font-weight: 600; color: #495057; margin-bottom: 10px;">
+									<i class="fa fa-github" style="font-size: 18px;"></i> Configure GitHub & Git Integration
+								</div>
+								<div style="font-size: 13px; color: #6c757d; line-height: 1.6;">
+									Set up GitHub credentials for app installation and git identity for commits.
+								</div>
+								<div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 4px;">
+									<div style="font-size: 12px; color: #495057;">
+										<strong>Generate GitHub Token:</strong>
+										<a href="https://github.com/settings/tokens" target="_blank" style="margin-left: 5px;">github.com/settings/tokens</a>
+										→ Generate new token (classic) → Select <code>repo</code> scope
+									</div>
+								</div>
+							</div>
+						`
+					},
+					{
+						fieldname: 'github_username',
+						fieldtype: 'Data',
+						label: __('GitHub Username'),
+						reqd: 1,
+						default: frm.doc.github_username || '',
+						description: __('Used for GitHub API and git commits (e.g., amitascra)')
+					},
+					{
+						fieldname: 'github_token',
+						fieldtype: 'Password',
+						label: __('GitHub Personal Access Token'),
+						reqd: 1,
+						default: frm.doc.github_password || '',
+						description: __('Token with repo scope for private repositories')
+					},
+					{
+						fieldname: 'git_user_email',
+						fieldtype: 'Data',
+						label: __('Git User Email'),
+						reqd: 1,
+						default: frm.doc.git_user_email || '',
+						description: __('Email for git commits (e.g., amit@example.com)')
+					},
+					{
+						fieldname: 'test_result',
+						fieldtype: 'HTML',
+						options: '<div id="github-test-result"></div>'
+					}
+				],
+				primary_action_label: __('Test & Save'),
+				primary_action: (values) => {
+					// Test connection first
+					$('#github-test-result').html(`
+						<div style="padding: 10px; background: #e7f3ff; border-radius: 4px; margin-top: 10px;">
+							<i class="fa fa-spinner fa-spin"></i> Testing GitHub connection...
+						</div>
+					`);
+					
+					frappe.call({
+						method: "bench_manager.bench_manager.doctype.bench_settings.bench_settings.test_github_connection",
+						args: {
+							username: values.github_username,
+							token: values.github_token
+						},
+						callback: function(r) {
+							if (r.message && r.message.success) {
+								// Auto-populate email if available from GitHub and not already set
+								if (r.message.email && !values.git_user_email) {
+									dialog.set_value('git_user_email', r.message.email);
+								}
+								
+								// Show success
+								$('#github-test-result').html(`
+									<div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; margin-top: 10px;">
+										<div style="color: #155724; font-weight: 600; margin-bottom: 10px;">
+											<i class="fa fa-check-circle"></i> Connection Successful!
+										</div>
+										<div style="font-size: 13px; color: #155724;">
+											<div><strong>Username:</strong> ${r.message.login}</div>
+											<div><strong>Name:</strong> ${r.message.name || 'N/A'}</div>
+											<div><strong>Email:</strong> ${r.message.email || 'Not public'}</div>
+											<div><strong>Public Repos:</strong> ${r.message.public_repos || 0}</div>
+											<div><strong>Private Repos:</strong> ${r.message.total_private_repos || 0}</div>
+										</div>
+									</div>
+								`);
+								
+								// Save to form
+								frm.set_value('github_username', values.github_username);
+								frm.set_value('github_password', values.github_token);
+								frm.set_value('git_user_email', values.git_user_email);
+								
+								// Save form
+								frm.save().then(() => {
+									frappe.show_alert({
+										message: __('GitHub credentials saved successfully'),
+										indicator: 'green'
+									});
+									dialog.hide();
+								});
+							} else {
+								// Show error
+								$('#github-test-result').html(`
+									<div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin-top: 10px;">
+										<div style="color: #721c24; font-weight: 600; margin-bottom: 10px;">
+											<i class="fa fa-times-circle"></i> Connection Failed
+										</div>
+										<div style="font-size: 13px; color: #721c24; margin-bottom: 10px;">
+											<strong>Error:</strong> ${r.message.error}
+										</div>
+										<div style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+											<div style="font-size: 12px; color: #856404;">
+												<strong>Troubleshooting:</strong>
+												<ul style="margin: 5px 0 0 20px; padding-left: 0; list-style-position: inside;">
+													<li>Verify GitHub username is correct</li>
+													<li>Ensure token is valid and not expired</li>
+													<li>Token must have <code>repo</code> scope</li>
+												</ul>
+											</div>
+										</div>
+									</div>
+								`);
+							}
+						}
+					});
+				},
+				secondary_action_label: __('Cancel')
+			});
+			
+			dialog.show();
+		}, __('Configuration'));
+		
 		frm.add_custom_button(__('Reload Nginx'), () => {
 			let root_password = frm.doc.password_root;
 			
