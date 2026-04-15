@@ -360,6 +360,93 @@ def verify_password(site_name, mysql_password):
 
 
 @frappe.whitelist()
+def check_site_name_available(site_name):
+	"""Check if site name is available and valid"""
+	verify_whitelisted_call()
+	import re
+	
+	checks = {
+		"available": True,
+		"valid": True,
+		"message": "",
+		"suggestions": []
+	}
+	
+	# Format validation (lowercase alphanumeric, dots, hyphens)
+	if not re.match(r'^[a-z0-9.-]+$', site_name):
+		checks["valid"] = False
+		checks["message"] = "Site name can only contain lowercase letters, numbers, dots (.) and hyphens (-)"
+		return checks
+	
+	# Length validation (3-63 characters)
+	if len(site_name) < 3:
+		checks["valid"] = False
+		checks["message"] = "Site name must be at least 3 characters long"
+		return checks
+	
+	if len(site_name) > 63:
+		checks["valid"] = False
+		checks["message"] = "Site name must not exceed 63 characters"
+		return checks
+	
+	# Start/end validation
+	if site_name.startswith(('-', '.')) or site_name.endswith(('-', '.')):
+		checks["valid"] = False
+		checks["message"] = "Site name cannot start or end with hyphen or dot"
+		return checks
+	
+	# Check if site exists
+	try:
+		sites = safe_decode(check_output("ls")).strip("\n").split("\n")
+		if site_name in sites:
+			checks["available"] = False
+			checks["message"] = "Site already exists"
+			
+			# Generate suggestions
+			for i in range(1, 4):
+				suggestion = f"{site_name}{i}"
+				if suggestion not in sites:
+					checks["suggestions"].append(suggestion)
+			
+			return checks
+	except:
+		pass
+	
+	checks["message"] = "Site name is available"
+	return checks
+
+
+@frappe.whitelist()
+def get_system_info():
+	"""Get system information for site creation"""
+	verify_whitelisted_call()
+	import shutil
+	
+	info = {
+		"disk_space_gb": 0,
+		"disk_available": True,
+		"estimated_time_minutes": 2,
+		"warning": ""
+	}
+	
+	try:
+		# Get disk space
+		stat = shutil.disk_usage(".")
+		info["disk_space_gb"] = round(stat.free / (1024**3), 2)
+		
+		# Check if enough space (need at least 1GB)
+		if info["disk_space_gb"] < 1:
+			info["disk_available"] = False
+			info["warning"] = f"Low disk space: {info['disk_space_gb']} GB available. Need at least 1 GB."
+		
+	except Exception as e:
+		frappe.log_error(f"Error getting disk space: {str(e)}")
+		info["warning"] = "Could not check disk space"
+	
+	return info
+
+
+@frappe.whitelist()
 def create_site(site_name, install_erpnext, mysql_password=None, admin_password=None, key=None, a_async=True):
 	verify_whitelisted_call()
 	
