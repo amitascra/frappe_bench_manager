@@ -18,8 +18,6 @@
   "last_checked",
   "response_time",
   "check_status_button",
-  "section_break_4",
-  "developer_mode",
   "section_break_6",
   "db_name",
   "column_break_8",
@@ -29,9 +27,9 @@
   "frequency",
   "dropbox_backup",
   "other_settings",
-  "maintenance_mode",
-  "pause_scheduler",
+  "column_break_cryn",
   "column_break_12",
+  "developer_mode",
   "disable_website_cache",
   "limits",
   "expiry",
@@ -128,11 +126,6 @@
    "label": "Check Status Now"
   },
   {
-   "depends_on": "eval:!(doc.__islocal)",
-   "fieldname": "section_break_4",
-   "fieldtype": "Section Break"
-  },
-  {
    "default": "0",
    "fieldname": "developer_mode",
    "fieldtype": "Check",
@@ -166,16 +159,6 @@
    "fieldname": "other_settings",
    "fieldtype": "Section Break",
    "label": "Other Settings"
-  },
-  {
-   "fieldname": "maintenance_mode",
-   "fieldtype": "Data",
-   "label": "Maintenance Mode"
-  },
-  {
-   "fieldname": "pause_scheduler",
-   "fieldtype": "Data",
-   "label": "Pause Scheduler"
   },
   {
    "fieldname": "column_break_12",
@@ -288,11 +271,15 @@
    "fieldname": "dropbox_backup",
    "fieldtype": "Check",
    "label": "Dropbox_backup"
+  },
+  {
+   "fieldname": "column_break_cryn",
+   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "links": [],
- "modified": "2026-04-15 19:57:50.772002",
+ "modified": "2026-04-16 00:02:10.876136",
  "modified_by": "Administrator",
  "module": "Bench Manager",
  "name": "Site",

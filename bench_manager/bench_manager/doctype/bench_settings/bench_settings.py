@@ -135,8 +135,8 @@ class BenchSettings(Document):
 	def console_command(self, key, caller, app_name=None, branch_name=None):
 		commands = {
 			"bench_update": ["bench update"],
-			"bench_restart": ["sudo supervisorctl restart all"],
-			"bench_status": ["sudo supervisorctl status all"],
+			"bench_restart": ["sudo -n supervisorctl restart all"],
+			"bench_status": ["sudo -n supervisorctl status all"],
 			"bench_clear_cache": ["bench clear-cache"],
 			"bench_setup_requirements": ["bench setup requirements"],
 			"bench_build": ["bench build"],

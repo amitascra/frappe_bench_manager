@@ -50,9 +50,8 @@ class Site(Document):
 			self.sync_site_config()
 			self.app_list = "frappe"
 		else:
-			if self.developer_flag == 0:
-				self.update_site_config()
-				self.sync_site_config()
+			self.update_site_config()
+			self.sync_site_config()
 
 	def after_command(self, commands=None):
 		frappe.publish_realtime("Bench-Manager:reload-page")
@@ -98,65 +97,95 @@ class Site(Document):
 		return safe_decode(list_apps).strip("\n").split("\n")
 
 	def update_site_config(self):
+		"""Update site_config.json with editable field values from Site DocType"""
 		site_config_path = os.path.join(self.site_name, "site_config.json")
-		common_site_config_path = os.path.join("common_site_config.json")
-
-		with open(site_config_path, "r") as f:
-			site_config_data = json.load(f)
-		with open(common_site_config_path, "r") as f:
-			common_site_config_data = json.load(f)
-
-		editable_site_config_fields = [
-			"maintenance_mode",
-			"pause_scheduler",
-			"developer_mode",
-			"disable_website_cache",
-		]
-
-		for site_config_field in editable_site_config_fields:
-			if (
-				self.get_attr(site_config_field) == None or self.get_attr(site_config_field) == ""
-			):
-				if site_config_data.get(site_config_field) != None:
-					site_config_data.pop(site_config_field)
-				self.set_attr(site_config_field, common_site_config_data.get(site_config_field))
-
-			elif (
-				not common_site_config_data.get(site_config_field)
-				or self.get_attr(site_config_field) != common_site_config_data[site_config_field]
-			):
-				site_config_data[site_config_field] = self.get_attr(site_config_field)
-
-			elif self.get_attr(site_config_field) == common_site_config_data[site_config_field]:
-				if site_config_data.get(site_config_field) != None:
-					site_config_data.pop(site_config_field)
-
-			os.remove(site_config_path)
-			with open(site_config_path, "w") as f:
-				json.dump(site_config_data, f, indent=4)
-
-	def sync_site_config(self):
-		if os.path.isfile(self.site_name + "/site_config.json"):
-			site_config_path = self.site_name + "/site_config.json"
+		
+		if not os.path.exists(site_config_path):
+			frappe.log_error(f"Site config not found: {site_config_path}", "Site Config Update")
+			return
+		
+		try:
+			# Read current site config
 			with open(site_config_path, "r") as f:
 				site_config_data = json.load(f)
-				for site_config_field in self.site_config_fields:
-					if site_config_data.get(site_config_field):
-						self.set_attr(site_config_field, site_config_data[site_config_field])
+			
+			# Define editable fields with their types
+			editable_fields = {
+				"developer_mode": "boolean",  # Check field (0/1)
+				"maintenance_mode": "boolean",  # Check field (0/1)
+				"pause_scheduler": "boolean",   # Check field (0/1)
+				"disable_website_cache": "boolean"  # Check field (0/1)
+			}
+			
+			# Update each editable field
+			for field_name, field_type in editable_fields.items():
+				doc_value = self.get(field_name)
+				
+				# Normalize the value based on field type (all are boolean now)
+				# Check fields: 0 or 1
+				normalized_value = 1 if doc_value else 0
+				
+				# Update site_config.json logic:
+				# - If value is None or empty, remove from config (inherits from common_site_config)
+				# - If value is 0 (disabled), explicitly set to 0 to override common_site_config
+				# - If value is 1 (enabled), explicitly set to 1
+				
+				if normalized_value == 0:
+					# Explicitly disable (important to override common_site_config)
+					site_config_data[field_name] = 0
+				else:
+					# Explicitly enable
+					site_config_data[field_name] = 1
+			
+			# Write updated config back to file
+			with open(site_config_path, "w") as f:
+				json.dump(site_config_data, f, indent=4, sort_keys=True)
+			
+			frappe.logger().info(f"Updated site_config.json for {self.site_name}")
+			
+		except Exception as e:
+			frappe.log_error(f"Error updating site config for {self.site_name}: {str(e)}", "Site Config Update Error")
+			raise
 
-				if site_config_data.get("limits"):
-					for limits_field in self.limits_fields:
-						if site_config_data.get("limits").get(limits_field):
-							self.set_attr(limits_field, site_config_data["limits"][limits_field])
-
-					if site_config_data.get("limits").get("space_usage"):
-						for space_usage_field in self.space_usage_fields:
-							if site_config_data.get("limits").get("space_usage").get(space_usage_field):
-								self.set_attr(
-									space_usage_field, site_config_data["limits"]["space_usage"][space_usage_field]
-								)
-		else:
-			frappe.throw("The site you're trying to access doesn't actually exist.")
+	def sync_site_config(self):
+		"""Sync Site DocType fields from site_config.json"""
+		site_config_path = os.path.join(self.site_name, "site_config.json")
+		
+		if not os.path.isfile(site_config_path):
+			return
+		
+		try:
+			with open(site_config_path, "r") as f:
+				site_config_data = json.load(f)
+			
+			# Sync all site_config_fields
+			for site_config_field in self.site_config_fields:
+				if site_config_field in site_config_data:
+					value = site_config_data[site_config_field]
+					
+					# Handle different field types
+					if site_config_field in ["developer_mode", "maintenance_mode", "pause_scheduler", "disable_website_cache"]:
+						# Boolean fields: ensure 0 or 1
+						self.set_attr(site_config_field, 1 if value else 0)
+					else:
+						# Other fields: set as-is
+						self.set_attr(site_config_field, value)
+			
+			# Sync limits section
+			if site_config_data.get("limits"):
+				for limits_field in self.limits_fields:
+					if site_config_data.get("limits").get(limits_field):
+						self.set_attr(limits_field, site_config_data["limits"][limits_field])
+				
+				if site_config_data.get("limits").get("space_usage"):
+					for space_usage_field in self.space_usage_fields:
+						if site_config_data.get("limits").get("space_usage").get(space_usage_field):
+							self.set_attr(
+								space_usage_field, site_config_data["limits"]["space_usage"][space_usage_field]
+							)
+		
+		except Exception as e:
+			frappe.log_error(f"Error syncing site config for {self.site_name}: {str(e)}", "Site Config Sync Error")
 
 	@frappe.whitelist()
 	def create_alias(self, key, alias):
