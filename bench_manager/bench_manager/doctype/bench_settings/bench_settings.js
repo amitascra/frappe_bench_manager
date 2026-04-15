@@ -298,11 +298,22 @@ window.fix_single_app = function(app_name) {
 						show_app_debugger_dialog();
 					}, 1000);
 				} else {
+					let error_details = '<p>' + r.message.message + '</p>';
+					if (r.message.details) {
+						error_details += '<p><strong>Details:</strong> ' + r.message.details + '</p>';
+					}
+					if (r.message.output) {
+						error_details += '<p><strong>Output:</strong></p><pre style="max-height: 200px; overflow-y: auto;">' + r.message.output + '</pre>';
+					}
+					if (r.message.error) {
+						error_details += '<p><strong>Error:</strong></p><pre style="max-height: 200px; overflow-y: auto;">' + r.message.error + '</pre>';
+					}
+					
 					frappe.msgprint({
-						title: __('Error'),
-						message: r.message.message + '<br><br>' + 
-							(r.message.error ? '<pre>' + r.message.error + '</pre>' : ''),
-						indicator: 'red'
+						title: __('Error Generating PKG-INFO'),
+						message: error_details,
+						indicator: 'red',
+						wide: true
 					});
 				}
 			}

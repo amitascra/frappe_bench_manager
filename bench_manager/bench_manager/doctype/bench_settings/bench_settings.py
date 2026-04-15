@@ -862,12 +862,14 @@ def generate_pkg_info(app_name):
 						"egg_info_dir": egg_info_dir
 					}
 			else:
+				# List all directories to help debug
+				all_dirs = [d for d in os.listdir(app_path) if os.path.isdir(os.path.join(app_path, d))]
 				return {
 					"success": False,
 					"message": f"Command completed but no .egg-info directory was created",
-					"output": result.stdout,
-					"error": result.stderr,
-					"details": "This usually means the setup.py or pyproject.toml has errors"
+					"output": result.stdout if result.stdout else "No output",
+					"error": result.stderr if result.stderr else "No errors",
+					"details": f"This usually means the setup.py has errors or is incomplete. Directories in app: {', '.join(all_dirs[:10])}"
 				}
 		else:
 			return {
