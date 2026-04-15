@@ -44,11 +44,6 @@ frappe.ui.form.on('Site', {
 	refresh: function(frm) {
 		$('a.grey-link:contains("Delete")').hide();
 
-		// Auto-populate site_url if empty
-		if (!frm.doc.site_url && frm.doc.site_name && !frm.doc.__islocal) {
-			frm.set_value('site_url', `http://${frm.doc.site_name}`);
-		}
-
 		if (frm.doc.db_name == undefined) {
 			$('div.form-inner-toolbar').hide();
 		} else {
