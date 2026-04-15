@@ -115,12 +115,18 @@ frappe.ui.form.on('Site', {
 				btn: this,
 				callback: function(r){
 					var dialog = new frappe.ui.Dialog({
-						title: __('Are you sure?'),
+						title: __('Reinstall Site - Warning: All data will be lost!'),
 						fields: [
+							{fieldname: 'warning', fieldtype: 'HTML',
+								options: '<div style="padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 15px;"><strong>⚠️ Warning:</strong> This will completely reinstall the site and <strong>all data will be lost</strong>. Make sure you have a backup!</div>'},
 							{fieldname: 'admin_password', fieldtype: 'Password',
 								label: 'Administrator Password', reqd: r['message']['condition'][0] != 'T',
 								default: (r['message']['admin_password'] ? r['message']['admin_password'] :'admin'),
-								depends_on: `eval:${String(r['message']['condition'][0] != 'T')}`}
+								depends_on: `eval:${String(r['message']['condition'][0] != 'T')}`},
+							{fieldname: 'mysql_password', fieldtype: 'Password',
+								label: 'MySQL Root Password', reqd: r['message']['condition'][1] != 'T',
+								default: r['message']['root_password'],
+								depends_on: `eval:${String(r['message']['condition'][1] != 'T')}`}
 						]
 					});
 					dialog.set_primary_action(__('Reinstall'), () => {
@@ -129,7 +135,8 @@ frappe.ui.form.on('Site', {
 						frm.call('console_command', {
 							key: key,
 							caller: 'reinstall',
-							admin_password: dialog.fields_dict.admin_password.value
+							admin_password: dialog.fields_dict.admin_password.value,
+							mysql_password: dialog.fields_dict.mysql_password.value
 						}, () => {
 							dialog.hide();
 						});

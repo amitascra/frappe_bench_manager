@@ -218,16 +218,10 @@ class Site(Document):
 	def console_command(
 		self, key, caller, alias=None, app_name=None, admin_password=None, mysql_password=None
 	):
-		# Use hardcoded dev defaults if passwords not provided
-		try:
-			from bench_manager.dev_config import get_dev_default
-			if not admin_password:
-				admin_password = get_dev_default("admin_password", "admin")
-			if not mysql_password:
-				mysql_password = get_dev_default("mysql_root_password", "root")
-		except ImportError:
-			admin_password = admin_password or "admin"
-			mysql_password = mysql_password or "root"
+		# Use Bench Settings passwords instead of hardcoded dev_config
+		bench_settings = frappe.get_single("Bench Settings")
+		admin_password = admin_password or bench_settings.get("admin_password") or ""
+		mysql_password = mysql_password or bench_settings.get("mysql_root_password") or ""
 		
 		site_abspath = None
 		if alias:
@@ -242,8 +236,8 @@ class Site(Document):
 				"bench --site {site_name} backup --with-files".format(site_name=self.name)
 			],
 			"reinstall": [
-				"bench --site {site_name} reinstall --yes --admin-password {admin_password}".format(
-					site_name=self.name, admin_password=admin_password
+				"bench --site {site_name} reinstall --yes --admin-password {admin_password} --mariadb-root-password {mysql_password}".format(
+					site_name=self.name, admin_password=admin_password, mysql_password=mysql_password
 				)
 			],
 			"install_app": [
@@ -300,14 +294,20 @@ def pass_exists(doctype, docname=""):
 	with open(common_site_config_path, "r") as f:
 		common_site_config_data = json.load(f)
 
-	# Try to get passwords from config, fallback to dev defaults
-	try:
-		from bench_manager.dev_config import get_dev_default
-		root_password = common_site_config_data.get("root_password") or get_dev_default("mysql_root_password", "")
-		admin_password = common_site_config_data.get("admin_password") or get_dev_default("admin_password", "")
-	except ImportError:
-		root_password = common_site_config_data.get("root_password")
-		admin_password = common_site_config_data.get("admin_password")
+	# Get passwords from common_site_config, fallback to Bench Settings
+	root_password = common_site_config_data.get("root_password")
+	admin_password = common_site_config_data.get("admin_password")
+	
+	# If not in common_site_config, get from Bench Settings
+	if not root_password or not admin_password:
+		try:
+			bench_settings = frappe.get_single("Bench Settings")
+			if not root_password:
+				root_password = bench_settings.get("mysql_root_password") or ""
+			if not admin_password:
+				admin_password = bench_settings.get("admin_password") or ""
+		except Exception:
+			pass
 
 	ret["condition"] += "T" if root_password else "F"
 	ret["root_password"] = root_password
@@ -480,18 +480,13 @@ def create_site(site_name, install_erpnext=None, apps_to_install=None, mysql_pas
 	verify_whitelisted_call()
 	import json
 	
-	# Import dev defaults for hardcoded passwords
-	try:
-		from bench_manager.dev_config import get_dev_default
-		# Use hardcoded defaults if passwords not provided
+	# Get passwords from Bench Settings if not provided
+	if not mysql_password or not admin_password:
+		bench_settings = frappe.get_single("Bench Settings")
 		if not mysql_password:
-			mysql_password = get_dev_default("mysql_root_password", "root")
+			mysql_password = bench_settings.get("mysql_root_password") or "root"
 		if not admin_password:
-			admin_password = get_dev_default("admin_password", "admin")
-	except ImportError:
-		# Fallback if dev_config doesn't exist
-		mysql_password = mysql_password or "root"
-		admin_password = admin_password or "admin"
+			admin_password = bench_settings.get("admin_password") or "admin"
 	
 	commands = [
 		"bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} --no-mariadb-socket {site_name}".format(

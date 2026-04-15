@@ -24,7 +24,7 @@
   "password_settings",
   "admin_password",
   "column_break_16",
-  "root_password",
+  "mysql_root_password",
   "dropbox_settings",
   "app_access_key",
   "send_notifications_to",
@@ -159,18 +159,18 @@
   {
    "fieldname": "admin_password",
    "fieldtype": "Password",
-   "label": "Admin Password",
-   "read_only": 1
+   "label": "Default Admin Password",
+   "description": "Default password for new site administrators"
   },
   {
    "fieldname": "column_break_16",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "root_password",
+   "fieldname": "mysql_root_password",
    "fieldtype": "Password",
-   "label": "Root Password",
-   "read_only": 1
+   "label": "MySQL Root Password",
+   "description": "MySQL/MariaDB root password for site operations"
   },
   {
    "fieldname": "dropbox_settings",
