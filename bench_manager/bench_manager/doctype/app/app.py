@@ -244,6 +244,7 @@ class App(Document):
 			"new_branch": ["git branch {branch_name}".format(branch_name=branch_name)],
 			"delete_branch": ["git branch -D {branch_name}".format(branch_name=branch_name)],
 			"git_fetch": ["git fetch --all"],
+			"status": ["git status"],
 			"track-remote": [
 				"git checkout -b {branch_name} -t {remote}".format(
 					branch_name=branch_name, remote=remote

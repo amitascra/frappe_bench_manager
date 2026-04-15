@@ -81,6 +81,15 @@ frappe.ui.form.on('App', {
 				});
 			}, __('Git Operations'));
 			
+			frm.add_custom_button(__('Status'), function(){
+				let key = frappe.datetime.get_datetime_as_string();
+				console_dialog(key);
+				frm.call("console_command", {
+					key: key,
+					caller: "status"
+				});
+			}, __('Git Operations'));
+			
 			frm.add_custom_button(__('Fetch'), function(){
 				let key = frappe.datetime.get_datetime_as_string();
 				console_dialog(key);
