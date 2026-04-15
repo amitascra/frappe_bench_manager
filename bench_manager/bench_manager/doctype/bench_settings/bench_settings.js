@@ -38,11 +38,17 @@ frappe.ui.form.on('Bench Settings', {
 			dialog.show();
 		});
 		frm.add_custom_button(__('New Site'), function(){
-			// Get system info first
+			// Get system info and available apps
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.get_system_info',
 				callback: function(sys_info) {
 					const system_data = sys_info.message;
+					
+					// Get available apps
+					frappe.call({
+						method: 'bench_manager.bench_manager.doctype.site.site.get_available_apps',
+						callback: function(apps_response) {
+							const available_apps = apps_response.message || [];
 					
 					frappe.call({
 						method: 'bench_manager.bench_manager.doctype.site.site.pass_exists',
@@ -84,8 +90,50 @@ frappe.ui.form.on('Bench Settings', {
 									{fieldname: 'suggestions', fieldtype: 'HTML',
 										options: '<div id="site-suggestions"></div>'},
 									
-									// ERPNext checkbox
-									{fieldname: 'install_erpnext', fieldtype: 'Check', label: "Install ERPNext"},
+									// Apps Selection
+									{fieldname: 'apps_section', fieldtype: 'Section Break', label: "Select Apps to Install"},
+									{fieldname: 'apps_selector', fieldtype: 'HTML',
+										options: `
+											<div id="apps-selector" style="margin-bottom: 15px;">
+												${available_apps.length === 0 ? 
+													'<div style="padding: 20px; text-align: center; color: #6c757d;"><i class="fa fa-info-circle"></i> No apps available. Please sync apps first.</div>' :
+													`<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;">
+														${available_apps.map(app => `
+															<div class="app-card" data-app="${app.name}" style="
+																border: 2px solid #e9ecef;
+																border-radius: 8px;
+																padding: 12px;
+																cursor: pointer;
+																transition: all 0.2s;
+																position: relative;
+															">
+																${app.is_popular ? '<div style="position: absolute; top: 8px; right: 8px; background: #ffc107; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;">POPULAR</div>' : ''}
+																<div style="display: flex; align-items: start; gap: 10px;">
+																	<input type="checkbox" class="app-checkbox" data-app="${app.name}" style="margin-top: 2px;">
+																	<div style="flex: 1;">
+																		<div style="font-weight: 600; color: #495057; margin-bottom: 4px;">${app.display_name}</div>
+																		<div style="font-size: 11px; color: #6c757d; line-height: 1.4;">${app.description.substring(0, 80)}${app.description.length > 80 ? '...' : ''}</div>
+																		${app.version ? `<div style="font-size: 10px; color: #28a745; margin-top: 4px;">v${app.version}</div>` : ''}
+																	</div>
+																</div>
+															</div>
+														`).join('')}
+													</div>
+													<style>
+														.app-card:hover {
+															border-color: #5e64ff !important;
+															background: #f8f9ff;
+														}
+														.app-card.selected {
+															border-color: #5e64ff !important;
+															background: #f0f1ff;
+														}
+													</style>`
+												}
+											</div>
+										`},
+									{fieldname: 'selected_apps_info', fieldtype: 'HTML',
+										options: '<div id="selected-apps-info" style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 4px; display: none;"></div>'},
 									
 									// Admin Password
 									{fieldname: 'admin_password', fieldtype: 'Password',
@@ -231,10 +279,46 @@ frappe.ui.form.on('Bench Settings', {
 								});
 							}
 							
-							// Update estimated time when ERPNext checkbox changes
-							dialog.fields_dict.install_erpnext.$input.on('change', function() {
-								const install = $(this).is(':checked');
-								const time = install ? 5 : 2;
+							// Handle app selection
+							let selected_apps = [];
+							
+							// Click on card to toggle selection
+							$(document).on('click', '.app-card', function(e) {
+								if (e.target.type !== 'checkbox') {
+									const checkbox = $(this).find('.app-checkbox');
+									checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+								}
+							});
+							
+							// Handle checkbox change
+							$(document).on('change', '.app-checkbox', function() {
+								const app_name = $(this).data('app');
+								const card = $(this).closest('.app-card');
+								
+								if ($(this).is(':checked')) {
+									card.addClass('selected');
+									if (!selected_apps.includes(app_name)) {
+										selected_apps.push(app_name);
+									}
+								} else {
+									card.removeClass('selected');
+									selected_apps = selected_apps.filter(a => a !== app_name);
+								}
+								
+								// Update selected apps info
+								if (selected_apps.length > 0) {
+									$('#selected-apps-info').html(`
+										<div style="font-size: 12px;">
+											<strong><i class="fa fa-check-circle" style="color: #28a745;"></i> ${selected_apps.length} app${selected_apps.length > 1 ? 's' : ''} selected:</strong>
+											<span style="color: #495057;"> ${selected_apps.join(', ')}</span>
+										</div>
+									`).show();
+								} else {
+									$('#selected-apps-info').hide();
+								}
+								
+								// Update estimated time (2 min base + 2 min per app)
+								const time = 2 + (selected_apps.length * 2);
 								$('#estimated-time').text(time + ' minutes');
 							});
 							
@@ -250,12 +334,7 @@ frappe.ui.form.on('Bench Settings', {
 								}
 								
 								let key = frappe.datetime.get_datetime_as_string();
-								let install_erpnext;
-								if (dialog.fields_dict.install_erpnext.last_value != 1){
-									install_erpnext = "false";
-								} else {
-									install_erpnext = "true";
-								}
+								
 								frappe.call({
 									method: 'bench_manager.bench_manager.doctype.site.site.verify_password',
 									args: {
@@ -271,7 +350,7 @@ frappe.ui.form.on('Bench Settings', {
 													site_name: dialog.fields_dict.site_name.value,
 													admin_password: dialog.fields_dict.admin_password.value,
 													mysql_password: dialog.fields_dict.mysql_password.value,
-													install_erpnext: install_erpnext,
+													apps_to_install: JSON.stringify(selected_apps),
 													key: key
 												}
 											});
@@ -283,9 +362,11 @@ frappe.ui.form.on('Bench Settings', {
 							dialog.show();
 						}
 					});
-				}
-			});
+					}
+				});
+			}
 		});
+	});
 		frm.add_custom_button(__("Update"), function(){
 			let key = frappe.datetime.get_datetime_as_string();
 			console_dialog(key);

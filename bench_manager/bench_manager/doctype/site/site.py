@@ -447,8 +447,38 @@ def get_system_info():
 
 
 @frappe.whitelist()
-def create_site(site_name, install_erpnext, mysql_password=None, admin_password=None, key=None, a_async=True):
+def get_available_apps():
+	"""Get all available apps for installation"""
 	verify_whitelisted_call()
+	
+	try:
+		# Get all apps from App DocType
+		apps = frappe.get_all('App', 
+			fields=['name', 'app_title', 'app_description', 'app_publisher', 'version'],
+			order_by='app_title')
+		
+		# frappe is always installed, exclude it
+		apps = [app for app in apps if app.name != 'frappe']
+		
+		# Add metadata for popular apps
+		popular_apps = ['erpnext', 'hrms', 'healthcare', 'education']
+		
+		for app in apps:
+			app['is_popular'] = app.name in popular_apps
+			app['display_name'] = app.app_title or app.name.replace('_', ' ').title()
+			app['description'] = app.app_description or f"{app.display_name} application"
+		
+		return apps
+		
+	except Exception as e:
+		frappe.log_error(f"Error getting available apps: {str(e)}")
+		return []
+
+
+@frappe.whitelist()
+def create_site(site_name, install_erpnext=None, apps_to_install=None, mysql_password=None, admin_password=None, key=None, a_async=True):
+	verify_whitelisted_call()
+	import json
 	
 	# Import dev defaults for hardcoded passwords
 	try:
@@ -468,7 +498,31 @@ def create_site(site_name, install_erpnext, mysql_password=None, admin_password=
 			site_name=site_name, admin_password=admin_password, mysql_password=mysql_password
 		)
 	]
-	if install_erpnext == "true":
+	
+	# Handle multiple apps installation
+	if apps_to_install:
+		try:
+			# Parse JSON string to list
+			if isinstance(apps_to_install, str):
+				apps_list = json.loads(apps_to_install)
+			else:
+				apps_list = apps_to_install
+			
+			if apps_list:
+				# Install each selected app
+				for app_name in apps_list:
+					commands.append(
+						"bench --site {site_name} install-app {app_name}".format(
+							site_name=site_name, app_name=app_name
+						)
+					)
+				# Run migrate after all apps installed
+				commands.append(f"bench --site {site_name} migrate")
+		except Exception as e:
+			frappe.log_error(f"Error parsing apps_to_install: {str(e)}")
+	
+	# Legacy support for install_erpnext parameter
+	elif install_erpnext == "true":
 		with open("apps.txt", "r") as f:
 			app_list = f.read()
 		if "erpnext" not in app_list:
@@ -476,7 +530,8 @@ def create_site(site_name, install_erpnext, mysql_password=None, admin_password=
 		commands.append(
 			"bench --site {site_name} install-app erpnext".format(site_name=site_name)
 		)
-		commands.append(f"bench --site {site_name} migrate".format(site_name=site_name))
+		commands.append(f"bench --site {site_name} migrate")
+	
 	frappe.enqueue(
 		"bench_manager.bench_manager.doctype.site.site.jop_site_creation",
 		commands=commands,
