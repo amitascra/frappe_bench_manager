@@ -27,6 +27,7 @@ frappe.ui.form.on('App', {
 				});
 			});
 		} else {
+			// === GIT OPERATIONS GROUP ===
 			frm.add_custom_button(__('Commit'), function(){
 				var dialog = new frappe.ui.Dialog({
 					title: 'Commit Message',
@@ -46,7 +47,22 @@ frappe.ui.form.on('App', {
 					});
 				});
 				dialog.show();
-			});
+			}, __('Git Operations'));
+			
+			frm.add_custom_button(__('Push'), function(){
+				frappe.confirm(
+					__('This will push your commits to the remote repository. Continue?'),
+					() => {
+						let key = frappe.datetime.get_datetime_as_string();
+						console_dialog(key);
+						frm.call("console_command", {
+							key: key,
+							caller: "push"
+						});
+					}
+				);
+			}, __('Git Operations'));
+			
 			frm.add_custom_button(__('Stash'), function(){
 				let key = frappe.datetime.get_datetime_as_string();
 				console_dialog(key);
@@ -54,7 +70,8 @@ frappe.ui.form.on('App', {
 					key: key,
 					caller: "stash"
 				});
-			});
+			}, __('Git Operations'));
+			
 			frm.add_custom_button(__('Apply Stash'), function(){
 				let key = frappe.datetime.get_datetime_as_string();
 				console_dialog(key);
@@ -62,7 +79,18 @@ frappe.ui.form.on('App', {
 					key: key,
 					caller: "apply-stash"
 				});
-			});
+			}, __('Git Operations'));
+			
+			frm.add_custom_button(__('Fetch'), function(){
+				let key = frappe.datetime.get_datetime_as_string();
+				console_dialog(key);
+				frm.call("console_command", {
+					key: key,
+					caller: "git_fetch"
+				});
+			}, __('Git Operations'));
+			
+			// === REMOTE OPERATIONS GROUP ===
 			frm.add_custom_button(__('Pull & Rebase'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_remotes',
@@ -90,7 +118,8 @@ frappe.ui.form.on('App', {
 						dialog.show();
 					}
 				});
-			});
+			}, __('Remote Operations'));
+			
 			frm.add_custom_button(__('Track Remote'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_remotes',
@@ -121,7 +150,9 @@ frappe.ui.form.on('App', {
 						dialog.show();
 					}
 				});
-			});
+			}, __('Remote Operations'));
+			
+			// === BRANCH OPERATIONS GROUP ===
 			frm.add_custom_button(__('Switch Branch'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_branches',
@@ -155,7 +186,8 @@ frappe.ui.form.on('App', {
 						}
 					}
 				});
-			});
+			}, __('Branch Operations'));
+			
 			frm.add_custom_button(__('New Branch'), function(){
 				var dialog = new frappe.ui.Dialog({
 					title: 'Create New Branch',
@@ -175,7 +207,8 @@ frappe.ui.form.on('App', {
 					});
 				});
 				dialog.show();
-			});
+			}, __('Branch Operations'));
+			
 			frm.add_custom_button(__('Delete Branch'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_branches',
@@ -209,15 +242,7 @@ frappe.ui.form.on('App', {
 						}
 					}
 				});
-			});
-			frm.add_custom_button(__('Fetch'), function(){
-				let key = frappe.datetime.get_datetime_as_string();
-				console_dialog(key);
-				frm.call("console_command", {
-					key: key,
-					caller: "git_fetch"
-				});
-			});
+			}, __('Branch Operations'));
 		}
 	}
 });

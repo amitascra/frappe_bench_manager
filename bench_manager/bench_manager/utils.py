@@ -10,7 +10,7 @@ import frappe
 from frappe.model.document import Document
 
 
-def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=None):
+def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=None, env_vars=None):
 	verify_whitelisted_call()
 	start_time = frappe.utils.time.time()
 	console_dump = ""
@@ -48,13 +48,20 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 		user=frappe.session.user,
 	)
 	console_dump += initial_msg
+	
+	# Prepare environment variables
+	import os
+	env = os.environ.copy()
+	if env_vars:
+		env.update(env_vars)
+	
 	try:
 		for command in commands:
 			frappe.publish_realtime(key, f"\n$ {command}\n", user=frappe.session.user)
 			console_dump += f"\n$ {command}\n"
 			
 			terminal = Popen(
-				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd
+				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd, env=env
 			)
 			
 			# Read output character by character and stream it

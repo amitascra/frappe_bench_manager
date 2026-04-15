@@ -438,6 +438,91 @@ frappe.ui.form.on('Bench Settings', {
 		}, __('Bench Operations'));
 		
 		// === CONFIGURATION GROUP ===
+		// Generate SSH Keys Button
+		frm.add_custom_button(__('Generate SSH Keys'), () => {
+			frappe.confirm(
+				__('This will generate new SSH keys for GitHub authentication. Continue?'),
+				() => {
+					frappe.call({
+						method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.generate_ssh_keys',
+						freeze: true,
+						freeze_message: __('Generating SSH keys...'),
+						callback: function(r) {
+							if (r.message && r.message.success) {
+								frappe.msgprint({
+									title: __('SSH Keys Generated'),
+									message: `<div style="margin-bottom: 15px;">
+										<strong>✓ ${r.message.message}</strong>
+									</div>
+									<div style="padding: 10px; background: #f8f9fa; border-radius: 4px; margin-bottom: 10px;">
+										<strong>Public Key:</strong><br>
+										<textarea readonly style="width: 100%; height: 80px; font-family: monospace; font-size: 11px; margin-top: 5px;">${r.message.public_key}</textarea>
+									</div>
+									<div style="padding: 10px; background: #fff3cd; border-radius: 4px;">
+										<strong>Next Steps:</strong>
+										<ol style="margin: 5px 0 0 20px; padding-left: 0;">
+											<li>Copy the public key above</li>
+											<li>Go to <a href="https://github.com/settings/ssh/new" target="_blank">GitHub SSH Settings</a></li>
+											<li>Add the public key</li>
+											<li>Click "Test SSH Connection" to verify</li>
+										</ol>
+									</div>`,
+									indicator: 'green',
+									primary_action: {
+										label: __('Reload'),
+										action: () => frm.reload_doc()
+									}
+								});
+							} else {
+								frappe.msgprint({
+									title: __('Error'),
+									message: r.message.error,
+									indicator: 'red'
+								});
+							}
+						}
+					});
+				}
+			);
+		}, __('Configuration'));
+		
+		// Test SSH Connection Button
+		frm.add_custom_button(__('Test SSH Connection'), () => {
+			frappe.call({
+				method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.test_ssh_connection',
+				freeze: true,
+				freeze_message: __('Testing SSH connection...'),
+				callback: function(r) {
+					if (r.message && r.message.success) {
+						frappe.msgprint({
+							title: __('Connection Successful'),
+							message: `<div style="color: #28a745; margin-bottom: 10px;">
+								<strong>✓ ${r.message.message}</strong>
+							</div>
+							<div style="padding: 10px; background: #f8f9fa; border-radius: 4px; font-family: monospace; font-size: 11px;">
+								${r.message.output}
+							</div>`,
+							indicator: 'green',
+							primary_action: {
+								label: __('Reload'),
+								action: () => frm.reload_doc()
+							}
+						});
+					} else {
+						frappe.msgprint({
+							title: __('Connection Failed'),
+							message: `<div style="color: #dc3545; margin-bottom: 10px;">
+								<strong>✗ ${r.message.error}</strong>
+							</div>
+							${r.message.output ? `<div style="padding: 10px; background: #f8f9fa; border-radius: 4px; font-family: monospace; font-size: 11px;">${r.message.output}</div>` : ''}`,
+							indicator: 'red'
+						});
+					}
+				}
+			});
+		}, __('Configuration'));
+		
+		// Setup GitHub Button (Enhanced)
 		frm.add_custom_button(__('Setup GitHub'), () => {
 			const dialog = new frappe.ui.Dialog({
 				title: __('GitHub Configuration'),
@@ -448,16 +533,21 @@ frappe.ui.form.on('Bench Settings', {
 						options: `
 							<div style="padding: 15px; background: #f8f9fa; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #5e64ff;">
 								<div style="font-weight: 600; color: #495057; margin-bottom: 10px;">
-									<i class="fa fa-github" style="font-size: 18px;"></i> Configure GitHub & Git Integration
+									<i class="fa fa-github" style="font-size: 18px;"></i> Complete GitHub Integration Setup
 								</div>
-								<div style="font-size: 13px; color: #6c757d; line-height: 1.6;">
-									Set up GitHub credentials for app installation and git identity for commits.
+								<div style="font-size: 13px; color: #6c757d; line-height: 1.6; margin-bottom: 10px;">
+									Configure your GitHub credentials and git identity. We recommend using SSH for secure authentication.
+								</div>
+								<div style="padding: 10px; background: #e7f3ff; border-radius: 4px; border-left: 3px solid #5e64ff;">
+									<div style="font-size: 12px; color: #495057;">
+										<strong>💡 Recommended:</strong> Use "Generate SSH Keys" button first for secure, passwordless authentication.
+									</div>
 								</div>
 								<div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 4px;">
 									<div style="font-size: 12px; color: #495057;">
-										<strong>Generate GitHub Token:</strong>
-										<a href="https://github.com/settings/tokens" target="_blank" style="margin-left: 5px;">github.com/settings/tokens</a>
-										→ Generate new token (classic) → Select <code>repo</code> scope
+										<strong>For HTTPS (fallback):</strong>
+										<a href="https://github.com/settings/tokens" target="_blank" style="margin-left: 5px;">Generate GitHub Token</a>
+										→ Select <code>repo</code> scope
 									</div>
 								</div>
 							</div>

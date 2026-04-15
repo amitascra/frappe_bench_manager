@@ -406,6 +406,188 @@ def test_github_connection(username, token):
 
 
 @frappe.whitelist()
+def generate_ssh_keys():
+	"""Generate SSH keys for GitHub authentication"""
+	verify_whitelisted_call()
+	import subprocess
+	import os
+	
+	try:
+		# Get frappe user's home directory
+		home_dir = os.path.expanduser('~')
+		ssh_dir = os.path.join(home_dir, '.ssh')
+		
+		# Create .ssh directory if it doesn't exist
+		if not os.path.exists(ssh_dir):
+			os.makedirs(ssh_dir, mode=0o700)
+		
+		# Generate SSH key
+		key_path = os.path.join(ssh_dir, 'github_bench_manager')
+		email = frappe.get_single('Bench Settings').get('git_user_email') or 'bench@example.com'
+		
+		# Generate ed25519 key (more secure and shorter)
+		result = subprocess.run(
+			['ssh-keygen', '-t', 'ed25519', '-C', email, '-f', key_path, '-N', ''],
+			capture_output=True,
+			text=True
+		)
+		
+		if result.returncode != 0:
+			return {
+				'success': False,
+				'error': f'SSH key generation failed: {result.stderr}'
+			}
+		
+		# Read the generated keys
+		with open(f'{key_path}.pub', 'r') as f:
+			public_key = f.read().strip()
+		
+		with open(key_path, 'r') as f:
+			private_key = f.read().strip()
+		
+		# Update Bench Settings
+		bench_settings = frappe.get_single('Bench Settings')
+		bench_settings.ssh_public_key = public_key
+		bench_settings.ssh_private_key = private_key
+		bench_settings.ssh_key_generated = 1
+		bench_settings.save()
+		
+		# Configure SSH config file
+		ssh_config_path = os.path.join(ssh_dir, 'config')
+		ssh_config_content = f"""\n# GitHub Bench Manager Configuration\nHost github.com\n    HostName github.com\n    User git\n    IdentityFile {key_path}\n    StrictHostKeyChecking no\n"""
+		
+		# Append to SSH config if not already present
+		if os.path.exists(ssh_config_path):
+			with open(ssh_config_path, 'r') as f:
+				existing_config = f.read()
+			if 'GitHub Bench Manager Configuration' not in existing_config:
+				with open(ssh_config_path, 'a') as f:
+					f.write(ssh_config_content)
+		else:
+			with open(ssh_config_path, 'w') as f:
+				f.write(ssh_config_content)
+			os.chmod(ssh_config_path, 0o600)
+		
+		return {
+			'success': True,
+			'public_key': public_key,
+			'message': 'SSH keys generated successfully! Add the public key to your GitHub account.'
+		}
+		
+	except Exception as e:
+		frappe.log_error(f"SSH key generation failed: {str(e)}", "SSH Key Generation Error")
+		return {
+			'success': False,
+			'error': f'Error: {str(e)}'
+		}
+
+
+@frappe.whitelist()
+def test_ssh_connection():
+	"""Test SSH connection to GitHub"""
+	verify_whitelisted_call()
+	import subprocess
+	
+	try:
+		result = subprocess.run(
+			['ssh', '-T', 'git@github.com'],
+			capture_output=True,
+			text=True,
+			timeout=10
+		)
+		
+		# SSH to GitHub returns exit code 1 on success with message
+		if 'successfully authenticated' in result.stderr.lower():
+			# Update connection status
+			bench_settings = frappe.get_single('Bench Settings')
+			bench_settings.github_connection_status = 'Connected (SSH)'
+			bench_settings.save()
+			
+			return {
+				'success': True,
+				'message': 'SSH connection to GitHub successful!',
+				'output': result.stderr
+			}
+		else:
+			return {
+				'success': False,
+				'error': 'SSH connection failed. Make sure you have added the public key to GitHub.',
+				'output': result.stderr
+			}
+			
+	except subprocess.TimeoutExpired:
+		return {
+			'success': False,
+			'error': 'Connection timeout. Please check your internet connection.'
+		}
+	except Exception as e:
+		frappe.log_error(f"SSH connection test failed: {str(e)}", "SSH Test Error")
+		return {
+			'success': False,
+			'error': f'Error: {str(e)}'
+		}
+
+
+@frappe.whitelist()
+def setup_git_remote_ssh(app_name):
+	"""Convert app's git remote from HTTPS to SSH"""
+	verify_whitelisted_call()
+	import subprocess
+	import os
+	import re
+	
+	try:
+		app_path = os.path.join('..', 'apps', app_name)
+		
+		# Get current remote URL
+		result = subprocess.run(
+			['git', 'remote', 'get-url', 'origin'],
+			cwd=app_path,
+			capture_output=True,
+			text=True
+		)
+		
+		if result.returncode != 0:
+			return {'success': False, 'error': 'Failed to get remote URL'}
+		
+		current_url = result.stdout.strip()
+		
+		# Convert HTTPS to SSH
+		if current_url.startswith('https://github.com/'):
+			# Extract owner/repo from HTTPS URL
+			match = re.search(r'https://github\.com/(.+/.+?)(\.git)?$', current_url)
+			if match:
+				repo_path = match.group(1)
+				if not repo_path.endswith('.git'):
+					repo_path += '.git'
+				ssh_url = f'git@github.com:{repo_path}'
+				
+				# Set new SSH URL
+				result = subprocess.run(
+					['git', 'remote', 'set-url', 'origin', ssh_url],
+					cwd=app_path,
+					capture_output=True,
+					text=True
+				)
+				
+				if result.returncode == 0:
+					return {
+						'success': True,
+						'message': f'Remote URL changed to SSH: {ssh_url}'
+					}
+				else:
+					return {'success': False, 'error': result.stderr}
+		elif current_url.startswith('git@github.com:'):
+			return {'success': True, 'message': 'Already using SSH'}
+		else:
+			return {'success': False, 'error': 'Unknown remote URL format'}
+			
+	except Exception as e:
+		frappe.log_error(f"Git remote setup failed: {str(e)}", "Git Remote Setup Error")
+		return {'success': False, 'error': str(e)}
+
+
+@frappe.whitelist()
 def sync_all(in_background=False):
 	if not in_background:
 		frappe.msgprint("Sync has started and will run in the background...")

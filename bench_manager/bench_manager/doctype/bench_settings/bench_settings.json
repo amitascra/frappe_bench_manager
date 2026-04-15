@@ -44,6 +44,13 @@
   "section_break_37",
   "github_password",
   "git_user_email",
+  "ssh_settings_section",
+  "use_ssh_for_git",
+  "ssh_key_generated",
+  "ssh_column_break",
+  "github_connection_status",
+  "ssh_public_key",
+  "ssh_private_key",
   "mail_settings",
   "mail_port",
   "mail_server",
@@ -225,6 +232,50 @@
    "fieldname": "git_user_email",
    "fieldtype": "Data",
    "label": "Git User Email"
+  },
+  {
+   "fieldname": "ssh_settings_section",
+   "fieldtype": "Section Break",
+   "label": "SSH Configuration"
+  },
+  {
+   "default": "1",
+   "description": "Use SSH keys for git operations (recommended for security)",
+   "fieldname": "use_ssh_for_git",
+   "fieldtype": "Check",
+   "label": "Use SSH for Git"
+  },
+  {
+   "default": "0",
+   "description": "Indicates if SSH keys have been generated",
+   "fieldname": "ssh_key_generated",
+   "fieldtype": "Check",
+   "label": "SSH Keys Generated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ssh_column_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "GitHub connection status",
+   "fieldname": "github_connection_status",
+   "fieldtype": "Data",
+   "label": "Connection Status",
+   "read_only": 1
+  },
+  {
+   "description": "SSH public key - Add this to your GitHub account",
+   "fieldname": "ssh_public_key",
+   "fieldtype": "Long Text",
+   "label": "SSH Public Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ssh_private_key",
+   "fieldtype": "Password",
+   "hidden": 1,
+   "label": "SSH Private Key"
   },
   {
    "fieldname": "mail_settings",

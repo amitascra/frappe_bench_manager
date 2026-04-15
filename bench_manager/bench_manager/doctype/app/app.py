@@ -198,6 +198,7 @@ class App(Document):
 		bench_settings = frappe.get_single("Bench Settings")
 		github_username = bench_settings.get("github_username") or ""
 		git_user_email = bench_settings.get("git_user_email") or ""
+		use_ssh = bench_settings.get("use_ssh_for_git") or 0
 		
 		# Prepare git config commands if credentials are available
 		git_config_commands = []
@@ -205,6 +206,37 @@ class App(Document):
 			git_config_commands.append(f'git config user.name "{github_username}"')
 		if git_user_email:
 			git_config_commands.append(f'git config user.email "{git_user_email}"')
+		
+		# Prepare git push setup commands
+		git_push_setup = []
+		env_vars = {}
+		
+		# Check if we should use SSH or HTTPS
+		if use_ssh:
+			# For SSH, ensure remote is using SSH URL
+			import subprocess
+			import re
+			try:
+				app_path = os.path.join("..", "apps", self.name)
+				result = subprocess.run(
+					['git', 'remote', 'get-url', 'origin'],
+					cwd=app_path,
+					capture_output=True,
+					text=True
+				)
+				if result.returncode == 0:
+					current_url = result.stdout.strip()
+					# Convert HTTPS to SSH if needed
+					if current_url.startswith('https://github.com/'):
+						match = re.search(r'https://github\.com/(.+/.+?)(\.git)?$', current_url)
+						if match:
+							repo_path = match.group(1)
+							if not repo_path.endswith('.git'):
+								repo_path += '.git'
+							ssh_url = f'git@github.com:{repo_path}'
+							git_push_setup.append(f'git remote set-url origin {ssh_url}')
+			except:
+				pass  # If conversion fails, continue with existing URL
 		
 		commands = {
 			"git_init": git_config_commands + ["git init", "git add .", "git commit -m 'Initial Commit'"],
@@ -226,6 +258,7 @@ class App(Document):
 				"git add .",
 				'git commit -m "{commit_msg}"'.format(commit_msg=commit_msg),
 			],
+			"push": git_push_setup + ["git push"],
 			"stash": ["git add .", "git stash"],
 			"apply-stash": ["git stash apply"],
 		}
@@ -236,6 +269,7 @@ class App(Document):
 			doctype=self.doctype,
 			key=key,
 			docname=self.name,
+			env_vars=env_vars if env_vars else None,
 		)
 
 
