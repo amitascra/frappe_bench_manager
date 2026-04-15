@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"shortcuts_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Actions</b></span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site\",\"col\":3}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Settings\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cards_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Modules</b></span>\",\"col\":12}}]",
+ "content": "[{\"id\":\"shortcuts_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site\",\"col\":3}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"App\",\"col\":3}},{\"id\":\"shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Settings\",\"col\":3}},{\"id\":\"shortcut_4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Backup\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"cards_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"Site Management\",\"col\":4}},{\"id\":\"card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"App Management\",\"col\":4}},{\"id\":\"card_3\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration\",\"col\":4}}]",
  "creation": "2026-04-15 15:23:02.079130",
  "custom_blocks": [],
  "docstatus": 0,
@@ -99,15 +99,33 @@
  "shortcuts": [
   {
    "color": "Blue",
-   "doc_view": "",
    "format": "{} Sites",
    "label": "Site",
    "link_to": "Site",
    "type": "DocType"
   },
   {
+   "color": "Orange",
+   "format": "{} Apps",
+   "label": "App",
+   "link_to": "App",
+   "type": "DocType"
+  },
+  {
+   "color": "Purple",
+   "label": "Bench Settings",
+   "link_to": "Bench Settings",
+   "type": "DocType"
+  },
+  {
+   "color": "Gray",
+   "format": "{} Backups",
+   "label": "Site Backup",
+   "link_to": "Site Backup",
+   "type": "DocType"
+  },
+  {
    "color": "Green",
-   "doc_view": "",
    "format": "{} Online",
    "label": "Online Sites",
    "link_to": "Site",
@@ -116,26 +134,10 @@
   },
   {
    "color": "Red",
-   "doc_view": "",
    "format": "{} Offline",
    "label": "Offline Sites",
    "link_to": "Site",
    "stats_filter": "{\"site_status\": \"Offline\"}",
-   "type": "DocType"
-  },
-  {
-   "color": "Orange",
-   "doc_view": "",
-   "format": "{} Apps",
-   "label": "App",
-   "link_to": "App",
-   "type": "DocType"
-  },
-  {
-   "color": "Purple",
-   "doc_view": "",
-   "label": "Bench Settings",
-   "link_to": "Bench Settings",
    "type": "DocType"
   }
  ],
