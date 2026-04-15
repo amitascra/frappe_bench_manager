@@ -793,6 +793,17 @@ def generate_pkg_info(app_name):
 	if not os.path.exists(app_path):
 		frappe.throw(f"App directory not found: {app_path}")
 	
+	# Check if setup.py or pyproject.toml exists
+	setup_py = os.path.join(app_path, "setup.py")
+	pyproject_toml = os.path.join(app_path, "pyproject.toml")
+	
+	if not os.path.exists(setup_py) and not os.path.exists(pyproject_toml):
+		return {
+			"success": False,
+			"message": f"App {app_name} is missing setup.py or pyproject.toml. Cannot generate PKG-INFO.",
+			"details": "This app needs a proper Python package configuration file to generate metadata."
+		}
+	
 	try:
 		# Run pip install -e . in the app directory
 		import subprocess
@@ -814,11 +825,24 @@ def generate_pkg_info(app_name):
 					"pkg_info_path": pkg_info_path
 				}
 			else:
+				# Check if egg-info directory was created with different name
+				egg_info_dirs = [d for d in os.listdir(app_path) if d.endswith('.egg-info')]
+				if egg_info_dirs:
+					actual_pkg_info = os.path.join(app_path, egg_info_dirs[0], "PKG-INFO")
+					if os.path.isfile(actual_pkg_info):
+						return {
+							"success": True,
+							"message": f"PKG-INFO generated successfully for {app_name}",
+							"pkg_info_path": actual_pkg_info,
+							"note": f"egg-info directory name: {egg_info_dirs[0]}"
+						}
+				
 				return {
 					"success": False,
-					"message": f"pip install completed but PKG-INFO not found",
+					"message": f"pip install completed but PKG-INFO not found at expected location",
 					"output": result.stdout,
-					"error": result.stderr
+					"error": result.stderr,
+					"details": f"Expected: {pkg_info_path}"
 				}
 		else:
 			return {
