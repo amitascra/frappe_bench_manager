@@ -809,6 +809,16 @@ def generate_pkg_info(app_name):
 		
 		# Method 1: Try python setup.py egg_info (most reliable)
 		if os.path.exists(setup_py):
+			# Check if requirements.txt exists, create empty one if missing
+			requirements_txt = os.path.join(app_path, "requirements.txt")
+			if not os.path.exists(requirements_txt):
+				try:
+					with open(requirements_txt, 'w') as f:
+						f.write("# Auto-generated empty requirements.txt\n")
+					frappe.logger().info(f"Created empty requirements.txt for {app_name}")
+				except Exception as e:
+					frappe.logger().error(f"Failed to create requirements.txt for {app_name}: {str(e)}")
+			
 			result = subprocess.run(
 				[sys.executable, "setup.py", "egg_info"],
 				cwd=app_path,
@@ -816,6 +826,7 @@ def generate_pkg_info(app_name):
 				text=True,
 				timeout=60
 			)
+				
 		# Method 2: Try pip install -e for pyproject.toml based apps
 		else:
 			result = subprocess.run(
