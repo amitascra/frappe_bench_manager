@@ -352,9 +352,9 @@ def test_github_connection(username, token):
 	import requests
 	
 	try:
-		# Test GitHub API with provided credentials
+		# Test GitHub API with provided credentials (using Bearer token format)
 		headers = {
-			'Authorization': f'token {token}',
+			'Authorization': f'Bearer {token}',
 			'Accept': 'application/vnd.github.v3+json'
 		}
 		
@@ -585,6 +585,107 @@ def setup_git_remote_ssh(app_name):
 	except Exception as e:
 		frappe.log_error(f"Git remote setup failed: {str(e)}", "Git Remote Setup Error")
 		return {'success': False, 'error': str(e)}
+
+
+@frappe.whitelist()
+def search_github_repos(keyword, language=None, sort='stars', order='desc', per_page=100, page=1):
+	"""Search GitHub repositories by keyword"""
+	verify_whitelisted_call()
+	import requests
+	
+	try:
+		# Get GitHub credentials for authenticated search (higher rate limits)
+		bench_settings = frappe.get_single('Bench Settings')
+		github_token = bench_settings.get('github_password') or ''
+		
+		# Build query
+		query = keyword
+		if language:
+			query += f' language:{language}'
+		
+		# GitHub Search API endpoint
+		url = 'https://api.github.com/search/repositories'
+		params = {
+			'q': query,
+			'sort': sort,
+			'order': order,
+			'per_page': per_page,
+			'page': page
+		}
+		
+		headers = {
+			'Accept': 'application/vnd.github.v3+json'
+		}
+		
+		# Add authentication if token available (using Bearer token format)
+		# If token fails, we'll retry without authentication
+		if github_token:
+			headers['Authorization'] = f'Bearer {github_token}'
+		
+		response = requests.get(url, params=params, headers=headers, timeout=10)
+		
+		# If authenticated request fails with 401, retry without authentication
+		if response.status_code == 401 and github_token:
+			# Remove authorization header and retry
+			headers.pop('Authorization', None)
+			response = requests.get(url, params=params, headers=headers, timeout=10)
+		
+		if response.status_code == 200:
+			data = response.json()
+			repositories = []
+			
+			for repo in data.get('items', []):
+				repositories.append({
+					'name': repo.get('name'),
+					'full_name': repo.get('full_name'),
+					'description': repo.get('description', '') or 'No description',
+					'url': repo.get('html_url'),
+					'stars': repo.get('stargazers_count', 0),
+					'forks': repo.get('forks_count', 0),
+					'language': repo.get('language', 'Unknown'),
+					'updated_at': repo.get('updated_at'),
+					'topics': repo.get('topics', [])
+				})
+			
+			return {
+				'success': True,
+				'repositories': repositories,
+				'total_count': data.get('total_count', 0),
+				'keyword': keyword
+			}
+		elif response.status_code == 403:
+			return {
+				'success': False,
+				'error': 'Rate limit exceeded. Please try again later or add a GitHub token.'
+			}
+		elif response.status_code == 422:
+			return {
+				'success': False,
+				'error': 'Invalid search query. Please check your keyword.'
+			}
+		else:
+			return {
+				'success': False,
+				'error': f'GitHub API error: {response.status_code}'
+			}
+			
+	except requests.exceptions.Timeout:
+		return {
+			'success': False,
+			'error': 'Connection timeout. Please check your internet connection.'
+		}
+	except requests.exceptions.RequestException as e:
+		frappe.log_error(f"GitHub search failed: {str(e)}", "GitHub Search Error")
+		return {
+			'success': False,
+			'error': f'Connection error: {str(e)}'
+		}
+	except Exception as e:
+		frappe.log_error(f"Unexpected error searching GitHub: {str(e)}", "GitHub Search Error")
+		return {
+			'success': False,
+			'error': 'Unexpected error occurred. Please check error logs.'
+		}
 
 
 @frappe.whitelist()

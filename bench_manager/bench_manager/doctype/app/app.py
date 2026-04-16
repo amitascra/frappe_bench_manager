@@ -64,7 +64,8 @@ class App(Document):
 		frappe.publish_realtime("Bench-Manager:reload-page")
 
 	def on_trash(self):
-		if self.developer_flag == 0:
+		# Allow deletion if user has Administrator role
+		if self.developer_flag == 0 and 'Administrator' not in frappe.get_roles():
 			frappe.throw("Not allowed!")
 		else:
 			apps_file = "apps.txt"
@@ -81,7 +82,10 @@ class App(Document):
 			with open(apps_file, "w") as f:
 				f.writelines(apps)
 			if self.app_name != "":
-				check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
+				# Try to remove app directory if it exists
+				app_dir = os.path.join("..", "apps", self.app_name)
+				if os.path.exists(app_dir):
+					check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
 
 	def update_app_details(self):
 		import glob
@@ -193,7 +197,7 @@ class App(Document):
 		)
 
 	@frappe.whitelist()
-	def console_command(self, key, caller, branch_name=None, remote=None, commit_msg=None):
+	def console_command(self, key, caller, branch_name=None, remote=None, commit_msg=None, force=0):
 		# Get git user configuration from Bench Settings
 		bench_settings = frappe.get_single("Bench Settings")
 		github_username = bench_settings.get("github_username") or ""
@@ -262,6 +266,7 @@ class App(Document):
 			"push": git_push_setup + ["git push"],
 			"stash": ["git add .", "git stash"],
 			"apply-stash": ["git stash apply"],
+			"remove_app": [f"bench remove-app {self.name}" + (" --force" if force else "")],
 		}
 		frappe.enqueue(
 			"bench_manager.bench_manager.utils.run_command",

@@ -252,6 +252,59 @@ frappe.ui.form.on('App', {
 					}
 				});
 			}, __('Branch Operations'));
+		
+		// === APP OPERATIONS GROUP ===
+		frm.add_custom_button(__('Remove App'), function(){
+			var dialog = new frappe.ui.Dialog({
+				title: 'Remove App - Warning',
+				fields: [
+					{
+						fieldname: 'warning',
+						fieldtype: 'HTML',
+						options: '<div style="padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; margin-bottom: 15px;"><strong>⚠️ Warning:</strong> This will permanently remove the app <strong>' + frm.doc.name + '</strong> from the bench. This action cannot be undone!</div>'
+					},
+					{
+						fieldname: 'force',
+						fieldtype: 'Check',
+						label: 'Force Remove (--force)',
+						description: 'Use --force flag to bypass dependency checks'
+					}
+				]
+			});
+			dialog.set_primary_action(__('Remove'), () => {
+				let key = frappe.datetime.get_datetime_as_string();
+				console_dialog(key);
+				dialog.hide();
+				
+				// Execute remove app command
+				frm.call("console_command", {
+					key: key,
+					caller: "remove_app",
+					force: dialog.fields_dict.force.value ? 1 : 0
+				}).then(() => {
+					// Wait for command to complete, then delete the doc
+					setTimeout(() => {
+						frappe.msgprint({
+							title: __('App Removed'),
+							message: __('App {0} has been removed from the bench. Deleting the document...', [frm.doc.name]),
+							indicator: 'green'
+						});
+						// Delete the App document
+						frappe.call({
+							method: 'frappe.client.delete',
+							args: {
+								doctype: 'App',
+								name: frm.doc.name
+							},
+							callback: function() {
+								frappe.set_route('List', 'App');
+							}
+						});
+					}, 3000); // Wait 3 seconds for remove command to complete
+				});
+			});
+			dialog.show();
+		}, __('App Operations'));
 		}
 	}
 });

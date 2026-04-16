@@ -522,6 +522,188 @@ frappe.ui.form.on('Bench Settings', {
 			});
 		}, __('Configuration'));
 		
+		// Search GitHub Repos Button
+		frm.add_custom_button(__('Search GitHub Repos'), () => {
+			let currentPage = 1;
+			let allRepositories = [];
+			let totalCount = 0;
+			let currentKeyword = '';
+			
+			const dialog = new frappe.ui.Dialog({
+				title: __('Search GitHub Repositories'),
+				size: 'large',
+				fields: [
+					{
+						fieldname: 'keyword',
+						fieldtype: 'Data',
+						label: __('Search Keyword'),
+						reqd: 1,
+						description: __('Enter keyword to search repositories (e.g., frappe, ecommerce, python)')
+					},
+					{
+						fieldname: 'language',
+						fieldtype: 'Select',
+						label: __('Language (Optional)'),
+						options: '',
+						description: __('Filter by programming language')
+					},
+					{
+						fieldname: 'sort_by',
+						fieldtype: 'Select',
+						label: __('Sort By'),
+						options: 'stars\nforks\nupdated',
+						default: 'stars'
+					},
+					{
+						fieldname: 'results_area',
+						fieldtype: 'HTML',
+						options: '<div id="github-search-results" style="max-height: 500px; overflow-y: auto; padding-right: 10px;"></div>'
+					}
+				],
+				primary_action_label: __('Search'),
+				primary_action: (values) => {
+					// Reset for new search
+					currentPage = 1;
+					allRepositories = [];
+					currentKeyword = values.keyword;
+					
+					$('#github-search-results').html(`
+						<div style="padding: 20px; text-align: center;">
+							<i class="fa fa-spinner fa-spin" style="font-size: 24px;"></i>
+							<div style="margin-top: 10px; color: #6c757d;">Searching GitHub repositories...</div>
+						</div>
+					`);
+					
+					loadPage(values, 1);
+				}
+			});
+			
+			function loadPage(values, page) {
+				frappe.call({
+					method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.search_github_repos',
+					args: {
+						keyword: values.keyword,
+						language: values.language || null,
+						sort: values.sort_by || 'stars',
+						page: page
+					},
+					callback: function(r) {
+						if (r.message && r.message.success) {
+							const repos = r.message.repositories;
+							totalCount = r.message.total_count;
+							
+							// Append new results
+							allRepositories = allRepositories.concat(repos);
+							
+							renderResults();
+						} else {
+							$('#github-search-results').html(`
+								<div style="padding: 20px; background: #f8d7da; border-radius: 6px; color: #721c24;">
+									<strong>Error:</strong> ${r.message.error}
+								</div>
+							`);
+						}
+					}
+				});
+			}
+			
+			function renderResults() {
+				let resultsHTML = `
+					<div style="padding: 15px; background: #e7f3ff; border-radius: 6px; margin-bottom: 15px;">
+						<strong>Found ${totalCount.toLocaleString()} repositories for "${currentKeyword}"</strong>
+						<div style="font-size: 12px; color: #6c757d; margin-top: 5px;">Showing ${allRepositories.length} results</div>
+					</div>
+				`;
+				
+				allRepositories.forEach(repo => {
+					const stars = repo.stars.toLocaleString();
+					const forks = repo.forks.toLocaleString();
+					const updated = new Date(repo.updated_at).toLocaleDateString();
+					const languageColors = {
+						'Python': '#3572A5', 'JavaScript': '#f1e05a', 'TypeScript': '#2b7489',
+						'PHP': '#4F5D95', 'Ruby': '#701516', 'Go': '#00ADD8',
+						'Java': '#b07219', 'C++': '#f34b7d', 'C#': '#239120',
+						'HTML': '#e34c26', 'CSS': '#563d7c', 'Shell': '#89e051',
+						'Vue': '#41b883', 'React': '#61dafb', 'Rust': '#dea584'
+					};
+					const languageBadge = repo.language !== 'Unknown' 
+						? `<span style="background: ${languageColors[repo.language] || '#6c757d'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-right: 5px;">${repo.language}</span>` 
+						: '';
+					
+					resultsHTML += `
+						<div style="padding: 15px; background: #f8f9fa; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #5e64ff;">
+							<div style="display: flex; justify-content: space-between; align-items: flex-start;">
+								<div style="flex: 1;">
+									<a href="${repo.url}" target="_blank" style="font-size: 16px; font-weight: 600; color: #5e64ff; text-decoration: none;">
+										${repo.full_name}
+									</a>
+									<div style="margin-top: 5px; color: #6c757d; font-size: 13px;">${repo.description}</div>
+									<div style="margin-top: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+										${languageBadge}
+										<span style="font-size: 12px; color: #6c757d;">
+											<i class="fa fa-star" style="color: #ffc107;"></i> ${stars}
+										</span>
+										<span style="font-size: 12px; color: #6c757d;">
+											<i class="fa fa-code-fork" style="color: #6c757d;"></i> ${forks}
+										</span>
+										<span style="font-size: 12px; color: #6c757d;">
+											<i class="fa fa-clock-o" style="color: #6c757d;"></i> Updated: ${updated}
+										</span>
+									</div>
+									<div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;">
+										<div style="display: flex; align-items: center; gap: 10px;">
+											<span style="font-size: 11px; color: #6c757d; font-weight: 600;">Clone URL:</span>
+											<input type="text" readonly value="https://github.com/${repo.full_name}.git" id="clone-url-${repo.name}" style="flex: 1; padding: 4px 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 11px; background: white; font-family: monospace;">
+											<button class="copy-clone-btn" data-clone-url="https://github.com/${repo.full_name}.git" style="padding: 4px 12px; background: #5e64ff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
+												<i class="fa fa-copy"></i> Copy
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					`;
+				});
+				
+				// Add Load More button if more results available
+				if (allRepositories.length < totalCount) {
+					resultsHTML += `
+						<div style="text-align: center; padding: 20px;">
+							<button id="load-more-btn" style="padding: 10px 30px; background: #5e64ff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">
+								Load More (${allRepositories.length + 100} / ${totalCount.toLocaleString()})
+							</button>
+						</div>
+					`;
+				}
+				
+				$('#github-search-results').html(resultsHTML);
+				
+				// Attach click handler to Load More button
+				$('#load-more-btn').on('click', function() {
+					currentPage++;
+					$(this).html('<i class="fa fa-spinner fa-spin"></i> Loading...');
+					loadPage(dialog.get_values(), currentPage);
+				});
+				
+				// Attach click handler to copy buttons
+				$('.copy-clone-btn').on('click', function() {
+					const cloneUrl = $(this).data('clone-url');
+					navigator.clipboard.writeText(cloneUrl).then(() => {
+						const originalHTML = $(this).html();
+						$(this).html('<i class="fa fa-check"></i> Copied!');
+						setTimeout(() => {
+							$(this).html(originalHTML);
+						}, 2000);
+					}).catch(err => {
+						console.error('Failed to copy:', err);
+						frappe.msgprint(__('Failed to copy to clipboard'));
+					});
+				});
+			}
+			
+			dialog.show();
+		}, __('Configuration'));
+		
 		// Setup GitHub Button (Enhanced)
 		frm.add_custom_button(__('Setup GitHub'), () => {
 			const dialog = new frappe.ui.Dialog({

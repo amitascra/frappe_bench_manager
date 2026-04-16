@@ -1,0 +1,23 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "bench_manager"
+authors = [
+    { name = "Frappe", email = "info@frappe.io" }
+]
+description = "GUI for using bench commands"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "frappe"
+]
+
+[project.urls]
+Homepage = "https://github.com/amitascra/frappe_bench_manager"
+Repository = "https://github.com/amitascra/frappe_bench_manager"
+
+[tool.bench]
+source_link = "https://github.com/amitascra/frappe_bench_manager"
