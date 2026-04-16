@@ -11,9 +11,10 @@ description = "GUI for using bench commands"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
-dependencies = [
-    "frappe"
-]
+dependencies = []
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0"
 
 [project.urls]
 Homepage = "https://github.com/amitascra/frappe_bench_manager"
