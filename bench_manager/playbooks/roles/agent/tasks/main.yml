@@ -1,0 +1,219 @@
+---
+- name: Create Frappe User
+  become: yes
+  become_method: sudo
+  user:
+    name: frappe
+    password: '!'
+    password_lock: yes
+    shell: /bin/bash
+    append: no
+    uid: 2000
+    generate_ssh_key: yes
+
+- name: Allow Passwordless sudo Access to Frappe User
+  copy:
+    content: 'frappe ALL=(ALL) NOPASSWD:ALL'
+    dest: /etc/sudoers.d/frappe
+    mode: '0440'
+
+- name: Configure Git Safe Directory
+  become: yes
+  command: git config --global --add safe.directory /home/frappe/agent/repo
+
+- name: Clone Agent Repository
+  become: yes
+  git:
+    repo: '{{ agent_repository_url }}'
+    dest: /home/frappe/agent/repo
+    remote: origin
+    version: '{% if agent_branch is defined and agent_branch is truthy %} {{ agent_branch }} {% else %} develop {% endif %}'
+    update: yes
+    force: yes
+
+- name: Change ownership of agent directory to frappe user
+  become: yes
+  file:
+    path: /home/frappe/agent
+    owner: frappe
+    group: frappe
+    recurse: yes
+
+- name: Install Agent Dependencies
+  become: yes
+  apt:
+    update_cache: yes
+    name:
+      - python3.8-venv
+      - python3-pip
+      - python3-dev
+      - build-essential
+      - libssl-dev
+      - libffi-dev
+      - supervisor
+      - nginx
+    state: present
+
+
+- name: Install Agent
+  become: yes
+  pip:
+    name: file:///home/frappe/agent/repo
+    virtualenv: /home/frappe/agent/env
+    virtualenv_python: python3
+    editable: yes
+
+- name: Change ownership of agent virtualenv to frappe user
+  become: yes
+  file:
+    path: /home/frappe/agent/env
+    owner: frappe
+    group: frappe
+    recurse: yes
+
+- name: Generate Agent Configuration File
+  become: yes
+  command: 'sudo -u frappe /home/frappe/agent/env/bin/agent setup config --name {{ server }} --workers {{ workers }} --press-url {{ press_url }}'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Setup Agent SQLite Database
+  become: yes
+  command: 'sudo -u frappe /home/frappe/agent/env/bin/agent setup database'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Create Agent NGINX Configuration Directory
+  become: yes
+  file:
+    dest: /home/frappe/agent/nginx
+    state: directory
+    owner: frappe
+    group: frappe
+
+- name: Setup Agent Authentication
+  become: yes
+  command: 'sudo -u frappe /home/frappe/agent/env/bin/agent setup authentication --password {{ agent_password }}'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Create Logs Directory for Supervisor
+  become: yes
+  file:
+    dest: /home/frappe/agent/logs
+    state: directory
+    owner: frappe
+    group: frappe
+
+- name: Setup Agent Supervisor
+  become: yes
+  command: 'sudo -u frappe /home/frappe/agent/env/bin/agent setup supervisor'
+  args:
+    chdir: /home/frappe/agent
+
+- name: Symlink Agent Supervisor Configuration
+  become: yes
+  file:
+    src: /home/frappe/agent/supervisor.conf
+    dest: /etc/supervisor/conf.d/agent.conf
+    state: link
+    force: yes
+    follow: no
+
+- name: Create Agent NGINX Configuration File
+  become: yes
+  file:
+    path: /home/frappe/agent/nginx.conf
+    state: touch
+    owner: frappe
+    group: frappe
+
+- name: Symlink Agent NGINX Configuration File
+  become: yes
+  file:
+    src: /home/frappe/agent/nginx.conf
+    dest: /etc/nginx/conf.d/agent.conf
+    state: link
+    force: yes
+    follow: no
+
+- name: Create Agent TLS Directory
+  become: yes
+  file:
+    dest: /home/frappe/agent/tls
+    state: directory
+    owner: frappe
+    group: frappe
+
+- name: Setup Agent TLS (Private Key)
+  become: yes
+  copy:
+    content: '{{ certificate_private_key }}'
+    dest: /home/frappe/agent/tls/privkey.pem
+
+- name: Set ownership of TLS Private Key
+  become: yes
+  file:
+    path: /home/frappe/agent/tls/privkey.pem
+    owner: frappe
+    group: frappe
+
+- name: Setup Agent TLS (Full Chain)
+  become: yes
+  copy:
+    content: '{{ certificate_full_chain }}'
+    dest: /home/frappe/agent/tls/fullchain.pem
+
+- name: Set ownership of TLS Full Chain
+  become: yes
+  file:
+    path: /home/frappe/agent/tls/fullchain.pem
+    owner: frappe
+    group: frappe
+
+- name: Setup Agent TLS (Intermediate Chain)
+  become: yes
+  copy:
+    content: '{{ certificate_intermediate_chain }}'
+    dest: /home/frappe/agent/tls/chain.pem
+
+- name: Set ownership of TLS Intermediate Chain
+  become: yes
+  file:
+    path: /home/frappe/agent/tls/chain.pem
+    owner: frappe
+    group: frappe
+
+- name: Setup Agent NGINX
+  become: yes
+  command: 'sudo -u frappe /home/frappe/agent/env/bin/agent setup nginx'
+  ignore_errors: yes
+  args:
+    chdir: /home/frappe/agent
+
+- name: Check if TLS certificates are provided
+  become: yes
+  stat:
+    path: /home/frappe/agent/tls/fullchain.pem
+  register: tls_cert
+
+- name: Fix NGINX Configuration
+  become: yes
+  shell: |
+    # Remove problematic directives from nginx config
+    sed -i '/more_set_headers/d' /etc/nginx/conf.d/agent.conf
+    sed -i '/vhost_traffic_status_display/d' /etc/nginx/conf.d/agent.conf
+    sed -i '/vhost_traffic_status/d' /etc/nginx/conf.d/agent.conf
+    # Only test nginx config if certificates exist and are not empty
+    if [ -s /home/frappe/agent/tls/fullchain.pem ]; then
+      nginx -t
+    fi
+  when: tls_cert.stat.exists
+
+- name: Restart Supervisor
+  become: yes
+  shell: supervisorctl reread && supervisorctl update
+
+- name: Start Agent
+  become: yes
+  command: supervisorctl start agent:*
