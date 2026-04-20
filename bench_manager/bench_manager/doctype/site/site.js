@@ -15,14 +15,30 @@ frappe.ui.form.on('Site', {
 			doc: frm.doc,
 			callback: function(r) {
 				if (r.message) {
-					let indicator = r.message.status === 'Online' ? 'green' : 'red';
-					let msg = `Site Status: ${r.message.status}`;
-					if (r.message.response_time) {
-						msg += ` (${r.message.response_time.toFixed(2)}ms)`;
+					let msg = `Overall Status: ${r.message.overall_status}`;
+					
+					// Add HTTP status
+					if (r.message.protocols && r.message.protocols.http) {
+						let http_status = r.message.protocols.http.status;
+						let http_indicator = http_status === 'Online' ? '✓' : '✗';
+						let http_time = r.message.protocols.http.response_time ? ` (${r.message.protocols.http.response_time.toFixed(2)}ms)` : '';
+						msg += `\nHTTP: ${http_indicator} ${http_status}${http_time}`;
 					}
-					if (r.message.error) {
-						msg += ` - ${r.message.error}`;
+					
+					// Add HTTPS status
+					if (r.message.protocols && r.message.protocols.https) {
+						let https_status = r.message.protocols.https.status;
+						let https_indicator = https_status === 'Online' ? '✓' : '✗';
+						let https_time = r.message.protocols.https.response_time ? ` (${r.message.protocols.https.response_time.toFixed(2)}ms)` : '';
+						msg += `\nHTTPS: ${https_indicator} ${https_status}${https_time}`;
 					}
+					
+					// Add SSL info
+					if (r.message.has_ssl) {
+						msg += `\nSSL: Enabled`;
+					}
+					
+					let indicator = r.message.overall_status === 'Online' ? 'green' : 'red';
 					frappe.show_alert({
 						message: msg,
 						indicator: indicator
@@ -109,6 +125,15 @@ frappe.ui.form.on('Site', {
 				});
 			});
 			dialog.show();
+		}, __('Site Actions'));
+
+		frm.add_custom_button(__('Install SSL'), function(){
+			let key = frappe.datetime.get_datetime_as_string();
+			console_dialog(key);
+			frm.call('console_command', {
+				key: key,
+				caller: 'install_ssl',
+			});
 		}, __('Site Actions'));
 
 		// === APP MANAGEMENT GROUP ===

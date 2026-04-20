@@ -1,0 +1,146 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"name",
+		"virtual_machine",
+		"cloud_provider",
+		"status",
+		"column_break_5",
+		"team",
+		"plan",
+		"gunicorn_workers",
+		"background_workers",
+		"memory_limit",
+		"column_break_10",
+		"agent_installed",
+		"agent_access_token",
+		"docker_installed",
+		"docker_registry_url",
+		"created_at",
+		"updated_at"
+	],
+	"fields": [
+		{
+			"fieldname": "virtual_machine",
+			"fieldtype": "Link",
+			"label": "Virtual Machine",
+			"options": "Virtual Machine",
+			"reqd": 1
+		},
+		{
+			"fieldname": "cloud_provider",
+			"fieldtype": "Link",
+			"label": "Cloud Provider",
+			"options": "Cloud Provider",
+			"read_only": 1
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Pending\nInstalling\nActive\nBroken\nArchived",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_5",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "team",
+			"fieldtype": "Link",
+			"label": "Team",
+			"options": "Team"
+		},
+		{
+			"fieldname": "plan",
+			"fieldtype": "Link",
+			"label": "Plan",
+			"options": "Server Plan"
+		},
+		{
+			"default": "4",
+			"fieldname": "gunicorn_workers",
+			"fieldtype": "Int",
+			"label": "Gunicorn Workers"
+		},
+		{
+			"default": "4",
+			"fieldname": "background_workers",
+			"fieldtype": "Int",
+			"label": "Background Workers"
+		},
+		{
+			"fieldname": "memory_limit",
+			"fieldtype": "Int",
+			"label": "Memory Limit (MB)"
+		},
+		{
+			"fieldname": "column_break_10",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "agent_installed",
+			"fieldtype": "Check",
+			"label": "Agent Installed",
+			"read_only": 1
+		},
+		{
+			"fieldname": "agent_access_token",
+			"fieldtype": "Password",
+			"label": "Agent Access Token"
+		},
+		{
+			"default": "0",
+			"fieldname": "docker_installed",
+			"fieldtype": "Check",
+			"label": "Docker Installed",
+			"read_only": 1
+		},
+		{
+			"fieldname": "docker_registry_url",
+			"fieldtype": "Data",
+			"label": "Docker Registry URL"
+		},
+		{
+			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"label": "Created At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "updated_at",
+			"fieldtype": "Datetime",
+			"label": "Updated At",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Application Server",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

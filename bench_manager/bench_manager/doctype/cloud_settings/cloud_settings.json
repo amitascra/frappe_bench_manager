@@ -1,0 +1,118 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"default_cloud_provider",
+		"docker_registry_url",
+		"docker_registry_username",
+		"docker_registry_password",
+		"column_break_5",
+		"bench_concurrency_limit",
+		"agent_polling_interval",
+		"enable_auto_scaling",
+		"column_break_9",
+		"monitoring_enabled",
+		"monitoring_endpoint",
+		"logging_enabled",
+		"logging_endpoint"
+	],
+	"fields": [
+		{
+			"fieldname": "default_cloud_provider",
+			"fieldtype": "Link",
+			"label": "Default Cloud Provider",
+			"options": "Cloud Provider"
+		},
+		{
+			"fieldname": "docker_registry_url",
+			"fieldtype": "Data",
+			"label": "Docker Registry URL"
+		},
+		{
+			"fieldname": "docker_registry_username",
+			"fieldtype": "Data",
+			"label": "Docker Registry Username"
+		},
+		{
+			"fieldname": "docker_registry_password",
+			"fieldtype": "Password",
+			"label": "Docker Registry Password"
+		},
+		{
+			"fieldname": "column_break_5",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "3",
+			"fieldname": "bench_concurrency_limit",
+			"fieldtype": "Int",
+			"label": "Bench Concurrency Limit"
+		},
+		{
+			"default": "5",
+			"fieldname": "agent_polling_interval",
+			"fieldtype": "Int",
+			"label": "Agent Polling Interval (seconds)"
+		},
+		{
+			"default": "0",
+			"fieldname": "enable_auto_scaling",
+			"fieldtype": "Check",
+			"label": "Enable Auto Scaling"
+		},
+		{
+			"fieldname": "column_break_9",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "monitoring_enabled",
+			"fieldtype": "Check",
+			"label": "Monitoring Enabled"
+		},
+		{
+			"fieldname": "monitoring_endpoint",
+			"fieldtype": "Data",
+			"label": "Monitoring Endpoint"
+		},
+		{
+			"default": "0",
+			"fieldname": "logging_enabled",
+			"fieldtype": "Check",
+			"label": "Logging Enabled"
+		},
+		{
+			"fieldname": "logging_endpoint",
+			"fieldtype": "Data",
+			"label": "Logging Endpoint"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Cloud Settings",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"is_single": 1
+}

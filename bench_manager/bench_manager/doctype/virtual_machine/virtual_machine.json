@@ -1,0 +1,213 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"name",
+		"cloud_provider",
+		"instance_type",
+		"ami_id",
+		"series",
+		"status",
+		"column_break_6",
+		"vcpu",
+		"ram",
+		"instance_id",
+		"public_ip",
+		"private_ip",
+		"ssh_key_name",
+		"vpc_id",
+		"subnet_id",
+		"security_group_id",
+		"column_break_12",
+		"created_at",
+		"updated_at",
+		"column_break_14",
+		"agent_installed",
+		"agent_access_token",
+		"docker_installed"
+	],
+	"fields": [
+		{
+			"fieldname": "cloud_provider",
+			"fieldtype": "Link",
+			"in_list_view": 1,
+			"label": "Cloud Provider",
+			"options": "Cloud Provider",
+			"reqd": 1
+		},
+		{
+			"fieldname": "instance_type",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Instance Type",
+			"options": "t3.micro\nt3.small\nt3.medium\nt3.large\nt3.xlarge\nt3.2xlarge\nt4.micro\nt4.small\nt4.medium\nt4.large\nt4.xlarge\nt4.2xlarge\nm5.large\nm5.xlarge\nm5.2xlarge\nm5.4xlarge\nm5.8xlarge\nm5.12xlarge\nm5.16xlarge\nm5.24xlarge\nc5.large\nc5.xlarge\nc5.2xlarge\nc5.4xlarge\nc5.9xlarge\nc5.18xlarge\nr5.large\nr5.xlarge\nr5.2xlarge\nr5.4xlarge\nr5.8xlarge\nr5.12xlarge\nr5.16xlarge\nr5.24xlarge",
+			"reqd": 1
+		},
+		{
+			"fieldname": "ami_id",
+			"fieldtype": "Data",
+			"label": "AMI ID",
+			"reqd": 1
+		},
+		{
+			"fieldname": "region",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Region",
+			"options": "us-east-1\nus-east-2\nus-west-1\nus-west-2\neu-west-1\neu-west-2\neu-central-1\nap-south-1\nap-southeast-1\nap-southeast-2\nap-northeast-1\nap-northeast-2\nsa-east-1",
+			"reqd": 1
+		},
+		{
+			"fieldname": "availability_zone",
+			"fieldtype": "Select",
+			"label": "Availability Zone",
+			"options": "a\nb\nc\nd"
+		},
+		{
+			"fieldname": "vcpu",
+			"fieldtype": "Int",
+			"in_list_view": 1,
+			"label": "vCPU",
+			"read_only": 1
+		},
+		{
+			"fieldname": "ram",
+			"fieldtype": "Int",
+			"in_list_view": 1,
+			"label": "RAM (GB)",
+			"read_only": 1
+		},
+		{
+			"fieldname": "disk_size",
+			"fieldtype": "Int",
+			"label": "Disk Size (GB)",
+			"reqd": 1
+		},
+		{
+			"fieldname": "series",
+			"fieldtype": "Select",
+			"label": "Series",
+			"options": "f\nm\nn",
+			"reqd": 1
+		},
+		{
+			"fieldname": "column_break_6",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Status",
+			"options": "Draft\nPending\nRunning\nStopped\nTerminated\nFailed",
+			"read_only": 1
+		},
+		{
+			"fieldname": "instance_id",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Instance ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "public_ip",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Public IP",
+			"read_only": 1
+		},
+		{
+			"fieldname": "private_ip",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Private IP",
+			"read_only": 1
+		},
+		{
+			"fieldname": "ssh_key_name",
+			"fieldtype": "Data",
+			"label": "SSH Key Name",
+			"read_only": 1
+		},
+		{
+			"fieldname": "vpc_id",
+			"fieldtype": "Data",
+			"label": "VPC ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "subnet_id",
+			"fieldtype": "Data",
+			"label": "Subnet ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "security_group_id",
+			"fieldtype": "Data",
+			"label": "Security Group ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"label": "Created At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_14",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "agent_installed",
+			"fieldtype": "Check",
+			"label": "Agent Installed",
+			"read_only": 1
+		},
+		{
+			"fieldname": "agent_password",
+			"fieldtype": "Password",
+			"label": "Agent Password",
+			"read_only": 1
+		},
+		{
+			"fieldname": "agent_access_token",
+			"fieldtype": "Password",
+			"label": "Agent Access Token"
+		},
+		{
+			"default": "0",
+			"fieldname": "docker_installed",
+			"fieldtype": "Check",
+			"label": "Docker Installed",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Virtual Machine",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

@@ -1,0 +1,111 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"cloud_bench",
+		"docker_image",
+		"docker_tag",
+		"status",
+		"column_break_5",
+		"build_log",
+		"error_message",
+		"started_at",
+		"completed_at",
+		"duration",
+		"agent_job"
+	],
+	"fields": [
+		{
+			"fieldname": "cloud_bench",
+			"fieldtype": "Link",
+			"label": "Cloud Bench",
+			"options": "Cloud Bench",
+			"reqd": 1
+		},
+		{
+			"fieldname": "docker_image",
+			"fieldtype": "Data",
+			"label": "Docker Image",
+			"read_only": 1
+		},
+		{
+			"fieldname": "docker_tag",
+			"fieldtype": "Data",
+			"label": "Docker Tag",
+			"read_only": 1
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Pending\nBuilding\nSuccess\nFailure",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_5",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "build_log",
+			"fieldtype": "Text",
+			"label": "Build Log"
+		},
+		{
+			"fieldname": "error_message",
+			"fieldtype": "Text",
+			"label": "Error Message"
+		},
+		{
+			"fieldname": "started_at",
+			"fieldtype": "Datetime",
+			"label": "Started At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "completed_at",
+			"fieldtype": "Datetime",
+			"label": "Completed At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "duration",
+			"fieldtype": "Float",
+			"label": "Duration (seconds)",
+			"read_only": 1
+		},
+		{
+			"fieldname": "agent_job",
+			"fieldtype": "Link",
+			"label": "Agent Job",
+			"options": "Agent Job",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Docker Build",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

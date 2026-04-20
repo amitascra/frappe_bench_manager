@@ -1,0 +1,119 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"cloud_bench",
+		"status",
+		"priority",
+		"column_break_4",
+		"payload",
+		"error_message",
+		"queued_at",
+		"started_at",
+		"completed_at",
+		"duration",
+		"retry_count",
+		"max_retries"
+	],
+	"fields": [
+		{
+			"fieldname": "cloud_bench",
+			"fieldtype": "Link",
+			"label": "Cloud Bench",
+			"options": "Cloud Bench",
+			"reqd": 1
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Queued\nStarted\nSuccess\nFailure",
+			"read_only": 1
+		},
+		{
+			"fieldname": "priority",
+			"fieldtype": "Select",
+			"label": "Priority",
+			"options": "High\nMedium\nLow",
+			"default": "Medium"
+		},
+		{
+			"fieldname": "column_break_4",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "payload",
+			"fieldtype": "JSON",
+			"label": "Payload"
+		},
+		{
+			"fieldname": "error_message",
+			"fieldtype": "Text",
+			"label": "Error Message"
+		},
+		{
+			"fieldname": "queued_at",
+			"fieldtype": "Datetime",
+			"label": "Queued At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "started_at",
+			"fieldtype": "Datetime",
+			"label": "Started At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "completed_at",
+			"fieldtype": "Datetime",
+			"label": "Completed At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "duration",
+			"fieldtype": "Float",
+			"label": "Duration (seconds)",
+			"read_only": 1
+		},
+		{
+			"default": "0",
+			"fieldname": "retry_count",
+			"fieldtype": "Int",
+			"label": "Retry Count",
+			"read_only": 1
+		},
+		{
+			"default": "3",
+			"fieldname": "max_retries",
+			"fieldtype": "Int",
+			"label": "Max Retries"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Bench Queue",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

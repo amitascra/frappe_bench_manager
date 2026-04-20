@@ -1,1 +1,2 @@
 # No direct dependencies - using tool.bench.frappe-dependencies
+boto3>=1.18.0

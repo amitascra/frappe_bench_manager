@@ -1,0 +1,158 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"name",
+		"application_server",
+		"cloud_provider",
+		"site_plan",
+		"frappe_version",
+		"apps",
+		"docker_image",
+		"status",
+		"column_break_7",
+		"bench_config",
+		"config",
+		"workers",
+		"memory_limit",
+		"swap_memory",
+		"column_break_13",
+		"created_at",
+		"updated_at",
+		"last_deployed_at",
+		"agent_job"
+	],
+	"fields": [
+		{
+			"fieldname": "application_server",
+			"fieldtype": "Link",
+			"label": "Application Server",
+			"options": "Application Server",
+			"reqd": 1
+		},
+		{
+			"fieldname": "cloud_provider",
+			"fieldtype": "Link",
+			"label": "Cloud Provider",
+			"options": "Cloud Provider",
+			"read_only": 1
+		},
+		{
+			"fieldname": "site_plan",
+			"fieldtype": "Link",
+			"label": "Site Plan",
+			"options": "Site Plan"
+		},
+		{
+			"fieldname": "frappe_version",
+			"fieldtype": "Select",
+			"label": "Frappe Version",
+			"options": "v15\nv14\nv13",
+			"reqd": 1
+		},
+		{
+			"fieldname": "apps",
+			"fieldtype": "Table",
+			"label": "Apps",
+			"options": "Cloud Bench App"
+		},
+		{
+			"fieldname": "docker_image",
+			"fieldtype": "Data",
+			"label": "Docker Image",
+			"read_only": 1
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Pending\nInstalling\nActive\nBroken\nArchived",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_7",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "bench_config",
+			"fieldtype": "JSON",
+			"label": "Bench Config"
+		},
+		{
+			"fieldname": "config",
+			"fieldtype": "JSON",
+			"label": "Config"
+		},
+		{
+			"fieldname": "workers",
+			"fieldtype": "Int",
+			"label": "Workers"
+		},
+		{
+			"fieldname": "memory_limit",
+			"fieldtype": "Int",
+			"label": "Memory Limit (MB)"
+		},
+		{
+			"fieldname": "swap_memory",
+			"fieldtype": "Int",
+			"label": "Swap Memory (MB)"
+		},
+		{
+			"fieldname": "column_break_13",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"label": "Created At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "updated_at",
+			"fieldtype": "Datetime",
+			"label": "Updated At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "last_deployed_at",
+			"fieldtype": "Datetime",
+			"label": "Last Deployed At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "agent_job",
+			"fieldtype": "Link",
+			"label": "Agent Job",
+			"options": "Agent Job",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Cloud Bench",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

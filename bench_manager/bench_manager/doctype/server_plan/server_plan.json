@@ -1,0 +1,111 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"plan_name",
+		"plan_type",
+		"cpu",
+		"memory",
+		"disk",
+		"price",
+		"enabled",
+		"column_break_8",
+		"description",
+		"created_at",
+		"modified"
+	],
+	"fields": [
+		{
+			"fieldname": "plan_name",
+			"fieldtype": "Data",
+			"label": "Plan Name",
+			"reqd": 1,
+			"unique": 1
+		},
+		{
+			"fieldname": "plan_type",
+			"fieldtype": "Select",
+			"label": "Plan Type",
+			"options": "Application Server\nDatabase Server\nProxy Server",
+			"reqd": 1
+		},
+		{
+			"fieldname": "cpu",
+			"fieldtype": "Data",
+			"label": "CPU",
+			"reqd": 1
+		},
+		{
+			"fieldname": "memory",
+			"fieldtype": "Data",
+			"label": "Memory",
+			"reqd": 1
+		},
+		{
+			"fieldname": "disk",
+			"fieldtype": "Data",
+			"label": "Disk",
+			"reqd": 1
+		},
+		{
+			"fieldname": "price",
+			"fieldtype": "Currency",
+			"label": "Price (Monthly)",
+			"reqd": 1
+		},
+		{
+			"default": "1",
+			"fieldname": "enabled",
+			"fieldtype": "Check",
+			"label": "Enabled"
+		},
+		{
+			"fieldname": "column_break_8",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "description",
+			"fieldtype": "Text",
+			"label": "Description"
+		},
+		{
+			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"label": "Created At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "modified",
+			"fieldtype": "Datetime",
+			"label": "Modified",
+			"read_only": 1
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Server Plan",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

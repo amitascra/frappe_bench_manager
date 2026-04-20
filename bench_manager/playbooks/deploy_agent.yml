@@ -1,0 +1,17 @@
+---
+- name: Deploy Bench Manager Agent
+  hosts: agent_servers
+  become: yes
+  vars:
+    agent_repository_url: "{{ agent_repository_url | default('https://github.com/amitascra/bench_agent.git') }}"
+    agent_branch: "{{ agent_branch | default('develop') }}"
+    server: "{{ server }}"
+    workers: "{{ workers | default(2) }}"
+    press_url: "{{ press_url }}"
+    agent_password: "{{ agent_password }}"
+    certificate_private_key: "{{ certificate_private_key | default('') }}"
+    certificate_full_chain: "{{ certificate_full_chain | default('') }}"
+    certificate_intermediate_chain: "{{ certificate_intermediate_chain | default('') }}"
+  
+  roles:
+    - agent

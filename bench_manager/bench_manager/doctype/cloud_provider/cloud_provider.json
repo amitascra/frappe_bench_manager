@@ -1,0 +1,127 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"provider_type",
+		"aws_access_key_id",
+		"aws_secret_access_key",
+		"region",
+		"status",
+		"column_break_5",
+		"vpc_id",
+		"subnet_id",
+		"security_group_id",
+		"ssh_key_name",
+		"ssh_private_key",
+		"enabled"
+	],
+	"fields": [
+		{
+			"fieldname": "provider_type",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Provider Type",
+			"options": "AWS EC2",
+			"reqd": 1
+		},
+		{
+			"fieldname": "aws_access_key_id",
+			"fieldtype": "Data",
+			"label": "AWS Access Key ID",
+			"reqd": 1
+		},
+		{
+			"fieldname": "aws_secret_access_key",
+			"fieldtype": "Password",
+			"label": "AWS Secret Access Key",
+			"reqd": 1
+		},
+		{
+			"fieldname": "region",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Region",
+			"options": "us-east-1\nus-east-2\nus-west-1\nus-west-2\neu-west-1\neu-west-2\neu-central-1\nap-south-1\nap-southeast-1\nap-southeast-2\nap-northeast-1\nap-northeast-2\nsa-east-1",
+			"reqd": 1
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Status",
+			"options": "Active\nInactive",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_5",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "vpc_id",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "VPC ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "subnet_id",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Subnet ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "security_group_id",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "Security Group ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "ssh_key_name",
+			"fieldtype": "Data",
+			"in_list_view": 1,
+			"label": "SSH Key Name",
+			"read_only": 1
+		},
+		{
+			"fieldname": "ssh_private_key",
+			"fieldtype": "Password",
+			"label": "SSH Private Key",
+			"read_only": 1
+		},
+		{
+			"default": "0",
+			"fieldname": "enabled",
+			"fieldtype": "Check",
+			"label": "Enabled"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Cloud Provider",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

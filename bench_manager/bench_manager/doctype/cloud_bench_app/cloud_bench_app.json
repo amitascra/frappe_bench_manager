@@ -1,0 +1,62 @@
+{
+	"actions": [],
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"app",
+		"repo",
+		"branch",
+		"hash"
+	],
+	"fields": [
+		{
+			"fieldname": "app",
+			"fieldtype": "Data",
+			"label": "App",
+			"reqd": 1
+		},
+		{
+			"fieldname": "repo",
+			"fieldtype": "Data",
+			"label": "Repo",
+			"reqd": 1
+		},
+		{
+			"fieldname": "branch",
+			"fieldtype": "Data",
+			"label": "Branch",
+			"reqd": 1
+		},
+		{
+			"fieldname": "hash",
+			"fieldtype": "Data",
+			"label": "Hash"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Cloud Bench App",
+	"naming_rule": "Random",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"istable": 1
+}

@@ -1,0 +1,132 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-04-17 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"name",
+		"proxy_server",
+		"cloud_provider",
+		"status",
+		"column_break_5",
+		"load_balancer_type",
+		"algorithm",
+		"health_check_enabled",
+		"health_check_interval",
+		"column_break_10",
+		"agent_installed",
+		"agent_access_token",
+		"created_at",
+		"updated_at",
+		"load_balancer_config"
+	],
+	"fields": [
+		{
+			"fieldname": "proxy_server",
+			"fieldtype": "Link",
+			"label": "Proxy Server",
+			"options": "Proxy Server",
+			"reqd": 1
+		},
+		{
+			"fieldname": "cloud_provider",
+			"fieldtype": "Link",
+			"label": "Cloud Provider",
+			"options": "Cloud Provider",
+			"read_only": 1
+		},
+		{
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Pending\nConfiguring\nActive\nBroken\nArchived",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_5",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "load_balancer_type",
+			"fieldtype": "Select",
+			"label": "Load Balancer Type",
+			"options": "Nginx\nTraefik\nAWS ALB"
+		},
+		{
+			"fieldname": "algorithm",
+			"fieldtype": "Select",
+			"label": "Algorithm",
+			"options": "Round Robin\nLeast Connections\nIP Hash"
+		},
+		{
+			"default": "1",
+			"fieldname": "health_check_enabled",
+			"fieldtype": "Check",
+			"label": "Health Check Enabled"
+		},
+		{
+			"default": "30",
+			"fieldname": "health_check_interval",
+			"fieldtype": "Int",
+			"label": "Health Check Interval (seconds)"
+		},
+		{
+			"fieldname": "column_break_10",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "0",
+			"fieldname": "agent_installed",
+			"fieldtype": "Check",
+			"label": "Agent Installed",
+			"read_only": 1
+		},
+		{
+			"fieldname": "agent_access_token",
+			"fieldtype": "Password",
+			"label": "Agent Access Token"
+		},
+		{
+			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"label": "Created At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "updated_at",
+			"fieldtype": "Datetime",
+			"label": "Updated At",
+			"read_only": 1
+		},
+		{
+			"fieldname": "load_balancer_config",
+			"fieldtype": "JSON",
+			"label": "Load Balancer Config"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2024-04-17 12:00:00.000000",
+	"module": "Bench Manager",
+	"name": "Load Balancing",
+	"naming_rule": "Expression",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": "admin@example.com",
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

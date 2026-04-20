@@ -197,51 +197,84 @@ class Site(Document):
 
 	@frappe.whitelist()
 	def check_site_status(self):
-		"""Check if site is up and running"""
+		"""Check if site is up and running on both HTTP and HTTPS"""
 		import requests
 		from datetime import datetime
+		import os
+		
+		# Check if SSL certificate exists
+		ssl_cert_path = f"/etc/letsencrypt/live/{self.site_name}/fullchain.pem"
+		has_ssl = os.path.exists(ssl_cert_path)
 		
 		if not self.site_url:
-			# Auto-detect URL from site_name
-			self.site_url = f"http://{self.site_name}"
+			# Auto-detect URL from site_name - prefer HTTPS if SSL exists
+			self.site_url = f"https://{self.site_name}" if has_ssl else f"http://{self.site_name}"
+			self.db_set('site_url', self.site_url)
 		
-		try:
-			start_time = datetime.now()
-			response = requests.get(self.site_url, timeout=10, allow_redirects=True)
-			end_time = datetime.now()
-			
-			response_time = (end_time - start_time).total_seconds() * 1000  # Convert to milliseconds
-			
-			if response.status_code == 200:
-				self.db_set('site_status', 'Online')
-				self.db_set('response_time', response_time)
-			else:
-				self.db_set('site_status', 'Error')
-				self.db_set('response_time', response_time)
+		# Check both HTTP and HTTPS
+		protocols = ['http', 'https']
+		results = {}
+		overall_status = 'Offline'
+		
+		for protocol in protocols:
+			url = f"{protocol}://{self.site_name}"
+			try:
+				start_time = datetime.now()
+				response = requests.get(url, timeout=10, allow_redirects=True)
+				end_time = datetime.now()
 				
-			self.db_set('last_checked', datetime.now())
-			
-			return {
-				'status': self.site_status,
-				'response_time': response_time,
-				'status_code': response.status_code
-			}
-			
-		except requests.exceptions.Timeout:
-			self.db_set('site_status', 'Offline')
-			self.db_set('last_checked', datetime.now())
-			return {'status': 'Offline', 'error': 'Timeout'}
-			
-		except requests.exceptions.ConnectionError:
-			self.db_set('site_status', 'Offline')
-			self.db_set('last_checked', datetime.now())
-			return {'status': 'Offline', 'error': 'Connection Error'}
-			
-		except Exception as e:
-			self.db_set('site_status', 'Error')
-			self.db_set('last_checked', datetime.now())
-			frappe.log_error(f"Site monitoring error for {self.site_name}: {str(e)}")
-			return {'status': 'Error', 'error': str(e)}
+				response_time = (end_time - start_time).total_seconds() * 1000  # Convert to milliseconds
+				
+				if response.status_code == 200:
+					results[protocol] = {
+						'status': 'Online',
+						'response_time': response_time,
+						'status_code': response.status_code,
+						'url': url
+					}
+					# Update overall status if this is the preferred protocol
+					if protocol == 'https' and has_ssl:
+						overall_status = 'Online'
+						# Update site_url to HTTPS if SSL exists and HTTPS is working
+						if self.site_url != url:
+							self.db_set('site_url', url)
+				else:
+					results[protocol] = {
+						'status': 'Error',
+						'response_time': response_time,
+						'status_code': response.status_code,
+						'url': url
+					}
+					
+			except requests.exceptions.Timeout:
+				results[protocol] = {'status': 'Offline', 'error': 'Timeout', 'url': url}
+			except requests.exceptions.ConnectionError:
+				results[protocol] = {'status': 'Offline', 'error': 'Connection Error', 'url': url}
+			except Exception as e:
+				results[protocol] = {'status': 'Error', 'error': str(e), 'url': url}
+		
+		# Determine overall status
+		if results.get('https', {}).get('status') == 'Online':
+			overall_status = 'Online'
+		elif results.get('http', {}).get('status') == 'Online':
+			overall_status = 'Online'
+		
+		self.db_set('site_status', overall_status)
+		
+		# Set response time from the working protocol (prefer HTTPS)
+		if results.get('https', {}).get('status') == 'Online':
+			self.db_set('response_time', results['https']['response_time'])
+		elif results.get('http', {}).get('status') == 'Online':
+			self.db_set('response_time', results['http']['response_time'])
+		
+		self.db_set('last_checked', datetime.now())
+		
+		return {
+			'overall_status': overall_status,
+			'protocols': results,
+			'site_url': self.site_url,
+			'has_ssl': has_ssl
+		}
 
 	@frappe.whitelist()
 	def console_command(
@@ -300,6 +333,12 @@ class Site(Document):
 				"bench drop-site {site_name} --root-password {mysql_password}".format(
 					site_name=self.name, mysql_password=mysql_password
 				)
+			],
+			"install_ssl": [
+				f"sudo certbot certonly --non-interactive --agree-tos --webroot -w /home/ubuntu/frappe-bench/sites --domains {self.site_name} --cert-name {self.site_name}",
+				f"python3 -c \"import json; import os; ssl_cert = '/etc/letsencrypt/live/{self.site_name}/fullchain.pem'; site_config_path = 'sites/{self.site_name}/site_config.json'; config = json.load(open(site_config_path)) if os.path.exists(site_config_path) else {{}}; config['ssl_certificate'] = ssl_cert if os.path.exists(ssl_cert) else config.pop('ssl_certificate', None); config['ssl_certificate_key'] = ssl_cert.replace('fullchain.pem', 'privkey.pem') if os.path.exists(ssl_cert) else config.pop('ssl_certificate_key', None); json.dump(config, open(site_config_path, 'w'), indent=4)\"",
+				"bench setup nginx --yes",
+				"sudo systemctl reload nginx"
 			],
 		}
 		frappe.enqueue(
