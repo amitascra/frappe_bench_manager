@@ -8,3 +8,4 @@ research-folder/
 # Exclude node_modules everywhere
 node_modules/
 app_store/node_modules/
+.claude/
