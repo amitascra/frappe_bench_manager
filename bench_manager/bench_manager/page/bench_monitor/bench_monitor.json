@@ -1,0 +1,16 @@
+{
+ "creation": "2026-07-22 00:00:00.000000",
+ "doctype": "Page",
+ "icon": "activity",
+ "modified": "2026-07-22 00:00:00.000000",
+ "module": "Bench Manager",
+ "name": "bench-monitor",
+ "page_name": "bench-monitor",
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "standard": "Yes",
+ "title": "Bench Monitor"
+}

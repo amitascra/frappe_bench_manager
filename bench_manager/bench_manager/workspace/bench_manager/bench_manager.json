@@ -5,7 +5,7 @@
    "label": "All Sites Chart"
   }
  ],
- "content": "[{\"id\":\"shortcuts_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Bench Manager</b></span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site\",\"col\":3}},{\"id\":\"MUv4dZjf7D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"App\",\"col\":3}},{\"id\":\"DQFvz4czaM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Backup\",\"col\":3}},{\"id\":\"8WyWrb2cuA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Installed Applications\",\"col\":3}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Node Manager\",\"col\":3}},{\"id\":\"aLRoaLaRRa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Manager Command\",\"col\":3}},{\"id\":\"1TM0rHeIAV\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Website Settings\",\"col\":3}},{\"id\":\"k1sJXUxaMd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Portal Settings\",\"col\":3}},{\"id\":\"Pq0kocWOvr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Verified Developers\",\"col\":3}},{\"id\":\"4jl3OQ_zaF\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Developers\",\"col\":3}},{\"id\":\"sj6Ca9Yvvs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Members\",\"col\":3}},{\"id\":\"jpB15nNvM4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Domain\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"0kmX58a04P\",\"type\":\"card\",\"data\":{\"card_name\":\"Job Workers\",\"col\":4}},{\"id\":\"KUxwS4V-Mj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"All Sites Chart\",\"col\":12}}]",
+ "content": "[{\"id\":\"shortcuts_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Bench Manager</b></span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site\",\"col\":3}},{\"id\":\"MUv4dZjf7D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"App\",\"col\":3}},{\"id\":\"DQFvz4czaM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Backup\",\"col\":3}},{\"id\":\"8WyWrb2cuA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Installed Applications\",\"col\":3}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Node Manager\",\"col\":3}},{\"id\":\"aLRoaLaRRa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Manager Command\",\"col\":3}},{\"id\":\"1TM0rHeIAV\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Website Settings\",\"col\":3}},{\"id\":\"k1sJXUxaMd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Portal Settings\",\"col\":3}},{\"id\":\"Pq0kocWOvr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Verified Developers\",\"col\":3}},{\"id\":\"4jl3OQ_zaF\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Developers\",\"col\":3}},{\"id\":\"sj6Ca9Yvvs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Members\",\"col\":3}},{\"id\":\"jpB15nNvM4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Site Domain\",\"col\":3}},{\"id\":\"bm-monitor-shortcut\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bench Monitor\",\"col\":3}},{\"id\":\"spacer_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"0kmX58a04P\",\"type\":\"card\",\"data\":{\"card_name\":\"Job Workers\",\"col\":4}},{\"id\":\"bm-monitoring-card\",\"type\":\"card\",\"data\":{\"card_name\":\"Monitoring\",\"col\":4}},{\"id\":\"KUxwS4V-Mj\",\"type\":\"chart\",\"data\":{\"chart_name\":\"All Sites Chart\",\"col\":12}}]",
  "creation": "2026-04-15 15:23:02.079130",
  "custom_blocks": [],
  "docstatus": 0,
@@ -90,9 +90,28 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monitoring",
+   "link_count": 1,
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bench Monitor",
+   "link_count": 0,
+   "link_to": "bench-monitor",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-05-18 12:12:26.093444",
+ "modified": "2026-07-22 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bench Manager",
  "name": "Bench Manager",
@@ -199,6 +218,13 @@
    "label": "Bench Node Manager",
    "link_to": "Bench Node Manager",
    "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "label": "Bench Monitor",
+   "link_to": "bench-monitor",
+   "type": "Page"
   }
  ],
  "title": "Bench Manager"
