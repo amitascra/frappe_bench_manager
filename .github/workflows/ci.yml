@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Bench Run Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mariadb:
+        image: mariadb:10.6
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+        env:
+          MARIADB_ROOT_PASSWORD: root
+      redis-cache:
+        image: redis:6.2-alpine
+        ports:
+          - 13000:6379
+      redis-queue:
+        image: redis:6.2-alpine
+        ports:
+          - 11000:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: apps/bench_manager
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install bench
+        run: |
+          pip install frappe-bench
+          npm install -g yarn
+
+      - name: Set up paths
+        id: paths
+        run: |
+          echo "app-path=$GITHUB_WORKSPACE/apps/bench_manager" >> "$GITHUB_OUTPUT"
+          echo "bench-root=$GITHUB_WORKSPACE/frappe-bench" >> "$GITHUB_OUTPUT"
+
+      - name: Init bench
+        run: |
+          bench init --skip-redis-config-generation --skip-assets \
+            --frappe-branch version-15 --python "$(which python)" \
+            "${{ steps.paths.outputs.bench-root }}"
+        working-directory: ${{ github.workspace }}
+
+      - name: Configure bench
+        run: |
+          bench set-mariadb-host 127.0.0.1
+          bench set-redis-cache-host localhost:13000
+          bench set-redis-queue-host localhost:11000
+          bench set-redis-socketio-host localhost:11000
+          sed -i '/redis/d' Procfile
+        working-directory: ${{ steps.paths.outputs.bench-root }}
+
+      - name: Get apps
+        run: |
+          # api/app_store_payment.py imports payments.utils at module scope,
+          # so bench_manager cannot be installed without it.
+          bench get-app --branch version-15 payments https://github.com/frappe/payments.git
+          bench get-app "${{ steps.paths.outputs.app-path }}"
+        working-directory: ${{ steps.paths.outputs.bench-root }}
+
+      - name: New site
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'; SET GLOBAL collation_server = 'utf8mb4_unicode_ci';"
+          bench new-site test_site \
+            --mariadb-root-password root \
+            --admin-password admin \
+            --no-mariadb-socket
+          bench --site test_site install-app payments
+          bench --site test_site install-app bench_manager
+        working-directory: ${{ steps.paths.outputs.bench-root }}
+
+      - name: Run tests
+        run: |
+          bench --site test_site set-config allow_tests true
+          bench --site test_site run-tests --app bench_manager
+        working-directory: ${{ steps.paths.outputs.bench-root }}
