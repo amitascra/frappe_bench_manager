@@ -4,7 +4,6 @@
 
 import os
 import frappe
-from frappe.utils import get_datetime
 
 
 def check_and_sync_if_needed():
@@ -24,8 +23,10 @@ def check_and_sync_if_needed():
 			trigger_sync()
 			return
 		
-		last_sync_time = get_datetime(last_sync) if isinstance(last_sync, str) else last_sync
-		
+		# last_sync_timestamp is a Float field (see bench_node_manager.json),
+		# so last_sync is already a plain number here - it's compared
+		# directly against apps_mtime/os.path.getmtime() below, both floats.
+
 		# Check if apps.txt has been modified since last sync
 		apps_file = "apps.txt"
 		if os.path.exists(apps_file):

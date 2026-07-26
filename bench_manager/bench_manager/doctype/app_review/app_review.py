@@ -71,5 +71,5 @@ class AppReview(Document):
 					"rating": round(avg_rating, 1),
 					"review_count": len(reviews)
 				})
-		except Exception as e:
+		except Exception:
 			frappe.log_error(frappe.get_traceback(), "Update App Rating Error")

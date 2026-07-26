@@ -264,10 +264,11 @@ class CloudProvider(Document):
 		try:
 			ec2_client = self.get_aws_client()
 			
-			# Get instance details
-			response = ec2_client.describe_instances(InstanceIds=[instance_id])
-			instance = response["Reservations"][0]["Instances"][0]
-			
+			# Confirm the instance exists before terminating it - result
+			# unused on purpose, this call is for the side effect of raising
+			# if instance_id is invalid.
+			ec2_client.describe_instances(InstanceIds=[instance_id])
+
 			# Terminate the old instance
 			ec2_client.terminate_instances(InstanceIds=[instance_id])
 			

@@ -115,8 +115,10 @@ class VirtualMachine(Document):
 			
 			# Create instance with public IP assignment and user data script
 			# Use cloud-config format like Press to add SSH key to authorized_keys
-			# Get the public key from the SSH key pair
-			key_pair_response = ec2_client.describe_key_pairs(KeyNames=[ssh_key_name])
+			# Confirm the key pair exists before referencing it below - result
+			# is unused on purpose, this call is for the side effect of
+			# raising if ssh_key_name is invalid.
+			ec2_client.describe_key_pairs(KeyNames=[ssh_key_name])
 			# Note: AWS doesn't return KeyMaterial for existing keys, so we'll use the key name
 			# The SSH key will be automatically added by AWS when the instance is created
 			
@@ -448,7 +450,7 @@ runcmd:
 			public_ip = allocation_response['PublicIp']
 			
 			# Associate Elastic IP with instance
-			association_response = ec2_client.associate_address(
+			ec2_client.associate_address(
 				InstanceId=self.instance_id,
 				AllocationId=allocation_id
 			)

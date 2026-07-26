@@ -37,7 +37,6 @@ class ApplicationServer(Document):
 		"""Provision application server by installing Agent and Docker"""
 		try:
 			vm = self.get_virtual_machine()
-			cloud_provider = self.get_cloud_provider()
 			
 			# Ensure VM is running
 			if vm.status != "Running":
@@ -71,8 +70,6 @@ class ApplicationServer(Document):
 	def install_agent(self):
 		"""Install Agent on server"""
 		try:
-			vm = self.get_virtual_machine()
-			
 			# TODO: Execute Ansible playbook to install Agent
 			# Playbook should:
 			# 1. SSH into server
@@ -94,8 +91,6 @@ class ApplicationServer(Document):
 	def install_docker(self):
 		"""Install Docker on server"""
 		try:
-			vm = self.get_virtual_machine()
-			
 			# TODO: Execute Ansible playbook to install Docker
 			# Playbook should:
 			# 1. SSH into server

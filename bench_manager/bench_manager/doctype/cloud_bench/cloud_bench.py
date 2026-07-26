@@ -6,7 +6,6 @@ from __future__ import annotations
 import frappe
 from frappe.model.document import Document
 from datetime import datetime
-import json
 
 
 class CloudBench(Document):
@@ -53,10 +52,8 @@ class CloudBench(Document):
 					"hash": app.hash
 				})
 			
-			bench_config = json.loads(self.bench_config) if self.bench_config else {}
-			config = json.loads(self.config) if self.config else {}
-			
-			# TODO: Call Agent to create bench
+			# TODO: Call Agent to create bench, passing bench_config/config
+			# (json.loads(self.bench_config), json.loads(self.config)).
 			# This will be implemented in Phase 2.2 (Agent Communication Module)
 			# For now, mark as pending installation
 			

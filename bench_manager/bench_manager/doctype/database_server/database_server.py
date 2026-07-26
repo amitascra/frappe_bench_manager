@@ -36,7 +36,6 @@ class DatabaseServer(Document):
 		"""Provision database server by installing Agent and MariaDB"""
 		try:
 			vm = self.get_virtual_machine()
-			cloud_provider = self.get_cloud_provider()
 			
 			# Ensure VM is running
 			if vm.status != "Running":
