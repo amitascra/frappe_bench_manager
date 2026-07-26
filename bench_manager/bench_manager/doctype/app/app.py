@@ -85,35 +85,6 @@ class App(Document):
 		except frappe.DoesNotExistError:
 			pass
 
-	def on_trash(self):
-		"""Update category app_count when app is deleted"""
-		# Allow deletion if user has Administrator role
-		if self.developer_flag == 0 and 'Administrator' not in frappe.get_roles():
-			frappe.throw("Not allowed!")
-		else:
-			# Update category count before deletion
-			if self.category:
-				self.update_category_app_count()
-			
-			apps_file = "apps.txt"
-			with open(apps_file, "r") as f:
-				apps = f.readlines()
-			try:
-				apps.remove(self.app_name)
-			except:
-				try:
-					apps.remove(self.app_name + "\n")
-				except:
-					pass
-			os.remove(apps_file)
-			with open(apps_file, "w") as f:
-				f.writelines(apps)
-			if self.app_name != "":
-				# Try to remove app directory if it exists
-				app_dir = os.path.join("..", "apps", self.app_name)
-				if os.path.exists(app_dir):
-					check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
-
 	def update_category_app_count(self):
 		"""Update the app_count for the category this app belongs to"""
 		if self.category:
@@ -158,6 +129,17 @@ class App(Document):
 				app_dir = os.path.join("..", "apps", self.app_name)
 				if os.path.exists(app_dir):
 					check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
+
+	def after_delete(self):
+		"""Keep the category's app_count in step once the row is gone.
+
+		This has to run after deletion rather than in on_trash: App Category.
+		update_app_count() recounts with frappe.db.count instead of
+		decrementing, so calling it while this App still exists would count
+		the app being deleted and leave the total one too high.
+		"""
+		if self.category:
+			self.update_category_app_count()
 
 	def update_app_details(self):
 		import glob
