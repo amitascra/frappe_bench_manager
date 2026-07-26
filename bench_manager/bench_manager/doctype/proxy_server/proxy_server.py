@@ -36,7 +36,6 @@ class ProxyServer(Document):
 		"""Provision proxy server by installing Agent and Proxy (Nginx/Traefik)"""
 		try:
 			vm = self.get_virtual_machine()
-			cloud_provider = self.get_cloud_provider()
 			
 			# Ensure VM is running
 			if vm.status != "Running":

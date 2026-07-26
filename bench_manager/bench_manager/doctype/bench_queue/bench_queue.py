@@ -75,9 +75,13 @@ class BenchQueue(Document):
 			# Get cloud bench
 			bench = frappe.get_doc("Cloud Bench", queue_doc.cloud_bench)
 			
-			# Deploy bench
-			result = bench.deploy_bench()
-			
+			# Deploy bench. deploy_bench() currently either raises (caught
+			# below) or returns {"status": "Installing", ...} - never a
+			# failure dict - so nothing here to branch on yet. If that
+			# changes, this unconditional "Mark as success" needs to check
+			# the return value instead of only catching exceptions.
+			bench.deploy_bench()
+
 			# Mark as success
 			queue_doc.db_set({
 				"status": "Success",

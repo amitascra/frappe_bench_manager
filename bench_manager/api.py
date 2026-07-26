@@ -98,7 +98,7 @@ def get_app_details(app_id):
                 review["is_owner"] = False
         
         app_doc["reviews"] = reviews
-    except Exception as e:
+    except Exception:
         frappe.log_error(frappe.get_traceback(), "Get App Reviews Error")
         app_doc["reviews"] = []
     

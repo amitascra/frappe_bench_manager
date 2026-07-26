@@ -83,17 +83,18 @@ class LoadBalancing(Document):
 	def add_upstream(self, cloud_bench, port):
 		"""Add upstream server to load balancer"""
 		try:
-			bench = frappe.get_doc("Cloud Bench", cloud_bench)
-			app_server = frappe.get_doc("Application Server", bench.application_server)
-			vm = frappe.get_doc("Virtual Machine", app_server.virtual_machine)
-			
-			upstream_config = {
-				"cloud_bench": cloud_bench,
-				"server": vm.public_ip,
-				"port": port
-			}
-			
-			# TODO: Call Agent to add upstream to load balancer config
+			# Confirm the Cloud Bench exists before referencing it below -
+			# result unused on purpose, this call is for the side effect of
+			# raising if cloud_bench is invalid.
+			frappe.get_doc("Cloud Bench", cloud_bench)
+
+			# TODO: Call Agent to add upstream to load balancer config, with
+			# {"cloud_bench": cloud_bench,
+			#  "server": frappe.get_doc(
+			#      "Virtual Machine",
+			#      frappe.get_doc("Application Server", bench.application_server).virtual_machine,
+			#  ).public_ip,
+			#  "port": port}
 			
 			return {"status": "Success", "message": "Upstream added"}
 			
