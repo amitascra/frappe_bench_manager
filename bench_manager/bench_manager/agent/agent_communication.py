@@ -4,11 +4,10 @@
 from __future__ import annotations
 
 import requests
-from frappe.utils.password import get_decrypted_password
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-	from requests import Response
+	pass
 
 
 class AgentCommunication:

@@ -6,8 +6,7 @@ import os
 import re
 import shlex
 import time
-from subprocess import PIPE, STDOUT, Popen, check_output
-from datetime import datetime
+from subprocess import PIPE, check_output
 
 import frappe
 from bench_manager.bench_manager.utils import (

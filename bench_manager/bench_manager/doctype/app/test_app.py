@@ -3,7 +3,6 @@
 # See license.txt
 
 
-import frappe
 import unittest
 
 

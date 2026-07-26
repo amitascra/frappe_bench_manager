@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils.password import get_decrypted_password
 from frappe.utils import random_string
 from datetime import datetime
 
