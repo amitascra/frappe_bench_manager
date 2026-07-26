@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils.password import get_decrypted_password
 from datetime import datetime
 
 
@@ -242,7 +241,6 @@ runcmd:
 		"""Deploy agent to the virtual machine using Ansible playbooks"""
 		import os
 		import subprocess
-		from frappe.utils.password import get_decrypted_password
 
 		try:
 			# Get SSH key from Cloud Provider

@@ -21,7 +21,6 @@ from frappe import _
 from frappe.integrations.offsite_backup_utils import (
 	get_chunk_site,
 	send_email,
-	validate_file_size,
 )
 from frappe.integrations.utils import make_post_request
 from frappe.model.document import Document

@@ -97,7 +97,6 @@ class PaymentTransaction(Document):
 		refund_days = settings.refund_policy_days or 15
 		
 		# Check if within refund window
-		from datetime import datetime, timedelta
 		payment_date = frappe.utils.get_datetime(self.payment_date)
 		if (frappe.utils.now() - payment_date).days > refund_days:
 			frappe.throw("Refund period has expired")

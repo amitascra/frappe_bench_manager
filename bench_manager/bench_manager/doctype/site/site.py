@@ -8,7 +8,7 @@ import os
 import re
 import shlex
 import time
-from subprocess import PIPE, Popen, check_output
+from subprocess import check_output
 
 import frappe
 import pymysql

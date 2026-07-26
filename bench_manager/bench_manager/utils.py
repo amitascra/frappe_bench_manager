@@ -7,7 +7,6 @@ import re
 import shlex
 from subprocess import PIPE, STDOUT, Popen
 import frappe
-from frappe.model.document import Document
 
 
 def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=None, env_vars=None):

@@ -4,8 +4,7 @@
 
 import os
 import frappe
-from frappe.utils import now_datetime, get_datetime
-from datetime import timedelta
+from frappe.utils import get_datetime
 
 
 def check_and_sync_if_needed():
