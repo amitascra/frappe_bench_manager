@@ -11,7 +11,16 @@ description = "GUI for using bench commands"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+    "boto3>=1.18.0",
+    "dnspython>=1.16.0",
+    "cloudflare>=5.1.0",
+    "paramiko>=3.0.0",
+    "rsa>=4.9",
+    "requests>=2.28.0",
+    "packaging>=21.0",
+    "psutil>=5.9.0",
+]
 
 [tool.bench.frappe-dependencies]
 frappe = ">=15.0.0"

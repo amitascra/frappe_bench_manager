@@ -1,4 +1,6 @@
-# No direct dependencies - using tool.bench.frappe-dependencies
+# Kept in sync with pyproject.toml's [project.dependencies] - setup.py
+# reads this file directly (legacy pip install path); flit reads
+# pyproject.toml. Both must list the same packages.
 boto3>=1.18.0
 dnspython>=1.16.0
 cloudflare>=5.1.0
